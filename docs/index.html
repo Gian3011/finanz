@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanZ · Educación y gestión financiera personal</title>
+    <meta name="description" content="FinanZ: plataforma web para registrar ingresos y gastos, controlar presupuestos, ahorrar con metas y aprender finanzas personales. Proyecto Integrador I – UTP 2026.">
+    <link rel="icon" href="img/gatito_finanz.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #17221d; --muted: #5f6d66; --paper: #f5f7f3; --surface: #ffffff; --line: #dfe7df;
+            --azul: #123f78; --azul-2: #0b2a52; --verde: #176b4a; --mint: #dff4e7; --celeste: #2f8fd8; --coral: #d4553c;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root { --ink: #edf5ef; --muted: #a9b7ae; --paper: #0f1622; --surface: #172435; --line: #2d3f55; --verde: #6cdda5; --mint: #183a2a; }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "DM Sans", "Segoe UI", sans-serif; color: var(--ink); background: var(--paper); line-height: 1.6; }
+        a { color: inherit; }
+        .contenedor { width: min(1120px, 100% - 32px); margin-inline: auto; }
+        h1, h2, h3 { line-height: 1.2; }
+        h1, h2 { font-family: "Fraunces", serif; }
+
+        /* Hero */
+        .hero { background: linear-gradient(160deg, var(--azul) 0%, var(--azul-2) 100%); color: #fff; padding: 28px 0 64px; }
+        .barra { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .marca { display: flex; align-items: center; gap: 10px; font-family: "Fraunces", serif; font-size: 22px; font-weight: 700; text-decoration: none; }
+        .marca img { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.1); }
+        .barra nav a { color: #dbe7ff; text-decoration: none; font-weight: 600; margin-left: 20px; font-size: 15px; }
+        .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; margin-top: 48px; }
+        .etiqueta { display: inline-block; padding: 4px 12px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: 13px; font-weight: 600; }
+        .hero h1 { font-size: clamp(34px, 5vw, 54px); margin: 16px 0 14px; }
+        .hero p { color: #dbe7ff; font-size: 18px; max-width: 540px; }
+        .acciones { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 20px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 15px; }
+        .btn-principal { background: #8de0ae; color: #0b2a52; }
+        .btn-secundario { border: 1px solid rgba(255,255,255,.4); color: #fff; }
+        .btn:focus-visible { outline: 3px solid #f4c762; outline-offset: 3px; }
+        .demo { margin-top: 22px; font-size: 14px; color: #c7d6f2; }
+        .demo code { background: rgba(255,255,255,.12); padding: 2px 8px; border-radius: 6px; color: #fff; }
+        .captura-hero { border-radius: 18px; box-shadow: 0 30px 70px rgba(0,0,0,.35); width: 100%; height: auto; display: block; }
+
+        /* Secciones */
+        section { padding: 64px 0; }
+        .titulo-seccion { text-align: center; max-width: 680px; margin: 0 auto 36px; }
+        .titulo-seccion h2 { font-size: clamp(26px, 3.5vw, 36px); margin: 0 0 8px; }
+        .titulo-seccion p { color: var(--muted); margin: 0; }
+        .tarjetas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .tarjeta { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+        .tarjeta .icono { font-size: 28px; }
+        .tarjeta h3 { margin: 10px 0 6px; font-size: 18px; }
+        .tarjeta p { margin: 0; color: var(--muted); font-size: 15px; }
+        .tarjeta .rf { display: inline-block; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--verde); background: var(--mint); padding: 2px 8px; border-radius: 999px; }
+
+        .galeria { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+        figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+        figure img { width: 100%; height: auto; display: block; border-bottom: 1px solid var(--line); }
+        figcaption { padding: 12px 16px; font-size: 14px; color: var(--muted); }
+        figcaption strong { color: var(--ink); }
+        .movil { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; max-width: 520px; margin: 22px auto 0; }
+
+        .rnf { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+        .rnf .tarjeta h3 { font-size: 16px; }
+
+        .pasos { counter-reset: paso; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .paso { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+        .paso::before { counter-increment: paso; content: counter(paso); display: inline-flex; width: 34px; height: 34px; border-radius: 10px; align-items: center; justify-content: center; background: var(--celeste); color: #fff; font-weight: 700; }
+        .paso h3 { margin: 12px 0 6px; font-size: 17px; }
+        .paso p { margin: 0; color: var(--muted); font-size: 15px; }
+
+        .tecnologias { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        .tecnologias span { padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+
+        footer { border-top: 1px solid var(--line); padding: 32px 0 44px; color: var(--muted); font-size: 14px; text-align: center; }
+        footer p { margin: 4px 0; }
+
+        @media (max-width: 900px) {
+            .hero-grid { grid-template-columns: 1fr; }
+            .tarjetas, .pasos { grid-template-columns: 1fr 1fr; }
+            .galeria { grid-template-columns: 1fr; }
+            .barra nav { display: none; }
+        }
+        @media (max-width: 560px) {
+            .tarjetas, .pasos { grid-template-columns: 1fr; }
+            .hero p { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="contenedor">
+        <div class="barra">
+            <a class="marca" href="#"><img src="img/gatito_finanz.png" alt="">FinanZ</a>
+            <nav aria-label="Secciones de la página">
+                <a href="#funciones">Funciones</a>
+                <a href="#capturas">Capturas</a>
+                <a href="#probar">Probar</a>
+                <a href="https://github.com/__REPO__">Código</a>
+            </nav>
+        </div>
+
+        <div class="hero-grid">
+            <div>
+                <span class="etiqueta">Proyecto Integrador I · UTP 2026</span>
+                <h1>Tu dinero, ordenado y bajo control.</h1>
+                <p>FinanZ es una plataforma web que une la <strong>gestión</strong> y la <strong>educación financiera</strong>:
+                    registra ingresos y gastos, controla tu presupuesto, ahorra con metas, detecta gastos hormiga y aprende con lecciones y cuestionarios.</p>
+                <div class="acciones">
+                    <a class="btn btn-principal" href="https://codespaces.new/__REPO__?quickstart=1">▶ Probar el sistema en Codespaces</a>
+                    <a class="btn btn-secundario" href="https://github.com/__REPO__">Ver el código en GitHub</a>
+                </div>
+                <p class="demo">Cuenta de demostración: <code>juan@correo.com</code> · <code>Finanz2026</code></p>
+            </div>
+            <img class="captura-hero" src="img/resumen.jpg" alt="Panel principal de FinanZ con ingresos, gastos, balance y gráficos del mes" width="800" height="503">
+        </div>
+    </div>
+</header>
+
+<main>
+    <section id="funciones">
+        <div class="contenedor">
+            <div class="titulo-seccion">
+                <h2>Todo lo que necesitas para tus finanzas</h2>
+                <p>Los 20 requerimientos funcionales del proyecto, implementados en Java (Servlets + JSP) y MySQL.</p>
+            </div>
+            <div class="tarjetas">
+                <article class="tarjeta"><div class="icono" aria-hidden="true">💸</div><h3>Ingresos y gastos</h3><p>Registra movimientos por categoría (predeterminadas o propias) y filtra el historial por texto, tipo, categoría y fechas.</p><span class="rf">RF02 – RF05</span></article>
+                <article class="tarjeta"><div class="icono" aria-hidden="true">📊</div><h3>Presupuesto con alertas</h3><p>Define un presupuesto mensual y límites por categoría. FinanZ te avisa al llegar al 80 % y al superarlo.</p><span class="rf">RF06 – RF09</span></article>
+                <article class="tarjeta"><div class="icono" aria-hidden="true">🎯</div><h3>Metas de ahorro</h3><p>Crea metas con monto y fecha, registra aportes y mira tu progreso y cuánto debes ahorrar al mes.</p><span class="rf">RF10 – RF12</span></article>
+                <article class="tarjeta"><div class="icono" aria-hidden="true">🐜</div><h3>Gastos hormiga</h3><p>Detección automática de gastos pequeños y frecuentes, clasificación manual y proyección de su impacto anual.</p><span class="rf">RF13</span></article>
+                <article class="tarjeta"><div class="icono" aria-hidden="true">📈</div><h3>Estadísticas y comparación</h3><p>Gráficos de hábitos de gasto, evolución mensual y comparación de ingresos, gastos y ahorro entre dos meses.</p><span class="rf">RF14 – RF15</span></article>
+                <article class="tarjeta"><div class="icono" aria-hidden="true">📄</div><h3>Reporte en PDF</h3><p>Descarga el resumen financiero del mes con indicadores, categorías, metas, recomendaciones y movimientos.</p><span class="rf">RF16</span></article>
+                <article class="tarjeta"><div class="icono" aria-hidden="true">💡</div><h3>Recomendaciones</h3><p>Consejos personalizados según tus datos: ritmo de ahorro, presupuesto, metas retrasadas y más.</p><span class="rf">RF17</span></article>
+                <article class="tarjeta"><div class="icono" aria-hidden="true">📚</div><h3>Educación financiera</h3><p>Lecciones cortas y cuestionarios con corrección y nota de 0 a 20.</p><span class="rf">RF18 – RF19</span></article>
+                <article class="tarjeta"><div class="icono" aria-hidden="true">🧮</div><h3>Simulador de ahorro</h3><p>Calcula cuándo alcanzarás tu objetivo o cuánto debes aportar por semana, quincena o mes.</p><span class="rf">RF20</span></article>
+            </div>
+        </div>
+    </section>
+
+    <section id="capturas" style="background:var(--surface);border-block:1px solid var(--line)">
+        <div class="contenedor">
+            <div class="titulo-seccion">
+                <h2>Así se ve FinanZ</h2>
+                <p>Capturas del sistema funcionando con los datos de demostración.</p>
+            </div>
+            <div class="galeria">
+                <figure><img src="img/transacciones.jpg" alt="Pantalla de transacciones con formulario y historial filtrable" loading="lazy" width="800" height="503"><figcaption><strong>Transacciones.</strong> Registro, filtros y marca de gasto hormiga.</figcaption></figure>
+                <figure><img src="img/presupuesto.jpg" alt="Pantalla de presupuesto mensual con límites por categoría" loading="lazy" width="800" height="503"><figcaption><strong>Presupuestos.</strong> Monto disponible y límites por categoría.</figcaption></figure>
+                <figure><img src="img/metas.jpg" alt="Pantalla de metas de ahorro con barras de progreso" loading="lazy" width="800" height="503"><figcaption><strong>Metas.</strong> Progreso, aportes y aporte mensual sugerido.</figcaption></figure>
+                <figure><img src="img/simulador.jpg" alt="Simulador de ahorro con gráfico de proyección" loading="lazy" width="800" height="503"><figcaption><strong>Simulador.</strong> Proyección del ahorro acumulado.</figcaption></figure>
+                <figure><img src="img/analisis.jpg" alt="Análisis con recomendaciones y comparación de periodos" loading="lazy" width="800" height="500"><figcaption><strong>Análisis.</strong> Recomendaciones y comparación de periodos.</figcaption></figure>
+                <figure><img src="img/educacion.jpg" alt="Cuestionario de educación financiera corregido" loading="lazy" width="800" height="503"><figcaption><strong>Educación.</strong> Cuestionario con corrección automática.</figcaption></figure>
+                <figure><img src="img/login.jpg" alt="Pantalla de inicio de sesión" loading="lazy" width="800" height="504"><figcaption><strong>Inicio de sesión.</strong> Con registro de cuenta y bloqueo tras 3 intentos.</figcaption></figure>
+                <figure><img src="img/oscuro.jpg" alt="Panel principal en modo oscuro" loading="lazy" width="800" height="509"><figcaption><strong>Modo oscuro.</strong> Se recuerda en el navegador.</figcaption></figure>
+            </div>
+            <div class="movil">
+                <figure><img src="img/movil.jpg" alt="Panel principal en un celular" loading="lazy" width="800" height="1731"><figcaption><strong>Responsivo.</strong> Vista en celular.</figcaption></figure>
+                <figure><img src="img/movil-menu.jpg" alt="Menú lateral desplegable en un celular" loading="lazy" width="800" height="1731"><figcaption><strong>Menú móvil.</strong> Desplegable.</figcaption></figure>
+            </div>
+        </div>
+    </section>
+
+    <section id="calidad">
+        <div class="contenedor">
+            <div class="titulo-seccion">
+                <h2>Requerimientos no funcionales</h2>
+                <p>Decisiones técnicas para que el sistema sea rápido, seguro y usable en cualquier dispositivo.</p>
+            </div>
+            <div class="rnf">
+                <article class="tarjeta"><h3>⚡ Rendimiento</h3><p>Pool de conexiones HikariCP y servlets sin estado para atender 100–200 usuarios simultáneos.</p></article>
+                <article class="tarjeta"><h3>⏱ Velocidad</h3><p>Secciones cargadas por AJAX, consultas agregadas en SQL e índices: respuestas por debajo de 2 s.</p></article>
+                <article class="tarjeta"><h3>🔒 Seguridad</h3><p>PBKDF2-SHA256 con sal, bloqueo por intentos, CSRF, escape XSS, PreparedStatement y control de propiedad de datos.</p></article>
+                <article class="tarjeta"><h3>📱 Responsivo</h3><p>Diseño adaptable a celular, tablet y PC, con menú desplegable y modo oscuro.</p></article>
+                <article class="tarjeta"><h3>🟢 Disponibilidad</h3><p>Aplicación sin estado compartido y pool que se reconecta automáticamente a la base de datos.</p></article>
+            </div>
+        </div>
+    </section>
+
+    <section id="probar" style="background:var(--surface);border-block:1px solid var(--line)">
+        <div class="contenedor">
+            <div class="titulo-seccion">
+                <h2>Pruébalo en 3 pasos</h2>
+                <p>GitHub Codespaces levanta el sistema real (Java + MySQL) en la nube, sin instalar nada.</p>
+            </div>
+            <div class="pasos">
+                <div class="paso"><h3>Abre el Codespace</h3><p>Con tu cuenta de GitHub, haz clic en <a href="https://codespaces.new/__REPO__?quickstart=1"><strong>Probar el sistema</strong></a>.</p></div>
+                <div class="paso"><h3>Espera unos minutos</h3><p>Se instalan Java 17, Maven y MySQL 8 con los datos de demostración, y se inicia el servidor.</p></div>
+                <div class="paso"><h3>Inicia sesión</h3><p>Se abre la pestaña del puerto 8080. Entra con <code>juan@correo.com</code> / <code>Finanz2026</code>.</p></div>
+            </div>
+            <p style="text-align:center;margin-top:28px">
+                <a class="btn" style="background:var(--celeste);color:#fff" href="https://codespaces.new/__REPO__?quickstart=1">▶ Abrir en GitHub Codespaces</a>
+            </p>
+        </div>
+    </section>
+
+    <section id="tecnologias">
+        <div class="contenedor">
+            <div class="titulo-seccion"><h2>Tecnologías</h2></div>
+            <div class="tecnologias">
+                <span>Java 17</span><span>Jakarta EE 9.1 (Servlets + JSP)</span><span>MySQL 8</span><span>JDBC + DAO</span>
+                <span>HikariCP</span><span>OpenPDF</span><span>HTML5</span><span>CSS3 + Tailwind</span><span>JavaScript</span>
+                <span>Chart.js</span><span>GlassFish 6 / Jetty 11</span><span>JUnit 5</span><span>GitHub Actions</span>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="contenedor">
+        <p><strong>FinanZ</strong> – Plataforma Web de Educación y Gestión Financiera Personal</p>
+        <p>Curso Integrador I: Sistemas Software · Universidad Tecnológica del Perú · 2026</p>
+        <p>Ashley Canares Ramos · Gianmarco Morales Amao · Jesus Flores Herrera · Juan Miguel Choque · Maria Jose Condori Mendiguri</p>
+    </div>
+</footer>
+
+</body>
+</html>

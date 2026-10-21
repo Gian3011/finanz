@@ -1,0 +1,29 @@
+# Entorno de GitHub Codespaces: la aplicación (Java 17 + Maven) y la base de datos (MySQL 8).
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/java:1-17-bookworm
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    environment:
+      TZ: America/Lima
+      FINANZ_DB_URL: "jdbc:mysql://db:3306/db_finanz?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima&characterEncoding=UTF-8"
+      FINANZ_DB_USER: root
+      FINANZ_DB_PASSWORD: finanz
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      TZ: America/Lima
+      MYSQL_ROOT_PASSWORD: finanz
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
+    volumes:
+      # Al crearse por primera vez, MySQL ejecuta el script y deja la base lista con datos de demostración
+      - ../db/db_finanz.sql:/docker-entrypoint-initdb.d/01-db_finanz.sql:ro
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
