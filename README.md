@@ -18,11 +18,7 @@ aprender finanzas personales con lecciones y cuestionarios.
 1. Haz clic en el botón **“Open in GitHub Codespaces”** de arriba (necesitas una cuenta de GitHub).
 2. Espera 2–3 minutos mientras se crea el entorno (Java 17 + MySQL 8 con datos de demostración).
 3. Se abrirá la pestaña **FinanZ** (puerto 8080). Si no se abre, ve a la pestaña **Puertos** y abre el 8080.
-4. Inicia sesión con la cuenta de demostración:
-
-| Correo | Contraseña |
-|---|---|
-| `juan@correo.com` | `Finanz2026` |
+4. Inicia sesión con la cuenta
 
 > Para detener el servidor usa `Ctrl + C` en la terminal; para volver a iniciarlo: `bash .devcontainer/iniciar.sh`.
 
