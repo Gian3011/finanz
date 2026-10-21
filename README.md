@@ -24,7 +24,7 @@ aprender finanzas personales con lecciones y cuestionarios.
 
 ---
 
-## ✅ Requerimientos implementados
+> Al abrir el Codespace, FinanZ se inicia en segundo plano y sigue corriendo aunque cierres VS Code (registro: `/tmp/finanz.log`). Si se detuviera, ejecuta en la terminal: `setsid nohup bash .devcontainer/iniciar.sh > /tmp/finanz.log 2>&1 < /dev/null &`
 
 ### Funcionales
 

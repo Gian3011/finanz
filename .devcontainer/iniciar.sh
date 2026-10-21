@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Inicia FinanZ dentro de GitHub Codespaces: espera a MySQL y levanta el servidor en el puerto 8080.
-# Se ejecuta automáticamente en segundo plano cada vez que el Codespace se enciende
-# (postStartCommand). Registro: /tmp/finanz.log
+# Se ejecuta automáticamente en segundo plano al abrir el Codespace
+# (postAttachCommand). Registro: /tmp/finanz.log
 cd "$(dirname "$0")/../Sistema"
 
 if curl -s -o /dev/null http://localhost:8080/Login.jsp; then
