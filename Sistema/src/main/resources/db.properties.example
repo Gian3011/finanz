@@ -1,0 +1,7 @@
+# Copia este archivo como "db.properties" (en esta misma carpeta) y pon tus datos de MySQL.
+# db.properties NO se sube a GitHub, así cada integrante usa su propia contraseña.
+db.url=jdbc:mysql://localhost:3306/db_finanz?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima&characterEncoding=UTF-8
+db.usuario=root
+db.clave=TU_CONTRASEÑA_DE_MYSQL
+# Máximo de conexiones simultáneas del pool
+db.pool=20

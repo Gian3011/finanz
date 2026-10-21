@@ -13,6 +13,7 @@ public abstract class Movimiento {
     protected int idMovimiento;
     protected int idUsuario;
     protected int idCategoria;
+    protected String nombreCategoria; // solo lectura (JOIN con categoria)
     protected BigDecimal monto;
     protected LocalDate fecha;
     protected String descripcion;
@@ -57,6 +58,14 @@ public abstract class Movimiento {
 
     public void setIdCategoria(int idCategoria) {
         this.idCategoria = idCategoria;
+    }
+
+    public String getNombreCategoria() {
+        return nombreCategoria;
+    }
+
+    public void setNombreCategoria(String nombreCategoria) {
+        this.nombreCategoria = nombreCategoria;
     }
 
     public BigDecimal getMonto() {

@@ -10,6 +10,11 @@ public class Presupuesto {
     private LocalDate periodo; // representa el mes como su primer día, ej. 2026-09-01
     private BigDecimal montoPresupuesto;
 
+    /** Mes al que corresponde el presupuesto (ej. 2026-10). */
+    public java.time.YearMonth getMes() {
+        return java.time.YearMonth.from(periodo);
+    }
+
     public Presupuesto() {
     }
 

@@ -1,234 +1,177 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@ page import="com.mycompany.finanz.modelo.*" %>
-<%@ page import="com.mycompany.finanz.servicio.PresupuestoServicio" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="java.time.LocalDate" %>
-<%@ page import="java.math.BigDecimal" %>
-<%@ page import="java.math.RoundingMode" %>
-
-<div class="mb-6">
-    
-    <p class="mt-1" style="color:var(--muted)">Controla cuánto llevas gastado cada mes.</p>
-</div>
-
-<% if (request.getAttribute("error") != null) { %>
-    <p class="mensaje-error mb-4"><%= request.getAttribute("error") %></p>
-<% } %>
-
+<%@page import="com.mycompany.finanz.modelo.*"%>
+<%@page import="com.mycompany.finanz.servicio.PresupuestoServicio"%>
+<%@page import="com.mycompany.finanz.util.*"%>
+<%@page import="java.math.BigDecimal"%>
+<%@page import="java.time.YearMonth"%>
+<%@page import="java.util.*"%>
 <%
-    LocalDate periodo = (LocalDate) request.getAttribute("periodo");
+    YearMonth mes = (YearMonth) request.getAttribute("mes");
     Presupuesto presupuesto = (Presupuesto) request.getAttribute("presupuesto");
-    String mesActualTexto = LocalDate.now().withDayOfMonth(1).toString().substring(0, 7);
+    List<Categoria> categoriasGasto = (List<Categoria>) request.getAttribute("categoriasGasto");
+    boolean editable = !mes.isBefore(YearMonth.now());
 %>
+<%@include file="_mensajes.jspf"%>
+
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <h2 class="brand-serif text-2xl font-bold">Presupuesto de <%= Formato.mes(mes) %></h2>
+        <p class="mt-1 muted">Planifica cuánto gastar y recibe alertas al llegar al 80 % o al superarlo.</p>
+    </div>
+    <form action="presupuestos" method="get" class="flex items-end gap-2">
+        <label class="text-xs font-semibold muted">Mes
+            <input type="month" name="periodo" value="<%= mes %>" class="campo mt-1" data-enviar-al-cambiar>
+        </label>
+    </form>
+</div>
 
 <div class="mb-6 flex flex-wrap gap-3">
-    <button type="button" id="btn-presupuesto-mensual"
-            class="rounded-xl px-4 py-3 text-sm font-bold" style="background:#38b6ff;color:white">
-        + Presupuesto mensual
+    <% if (editable) { %>
+    <button type="button" class="btn btn-primario" data-abrir-modal="modal-presupuesto-mensual">
+        <i data-lucide="wallet"></i><%= presupuesto == null ? "Definir presupuesto mensual" : "Editar presupuesto" %>
     </button>
-
-    <button type="button" id="btn-limite-categoria" <% if (presupuesto == null) { %>disabled<% } %>
-            class="rounded-xl px-4 py-3 text-sm font-bold"
-            style="<% if (presupuesto == null) { %>background:var(--line);color:var(--muted);cursor:not-allowed<% } else { %>background:var(--forest);color:white<% } %>"
-            title="<% if (presupuesto == null) { %>Primero define el presupuesto mensual<% } %>">
-        + Categoría
+    <% } %>
+    <button type="button" class="btn btn-verde" data-abrir-modal="modal-limite-categoria" <%= presupuesto == null || !editable ? "disabled title=\"Primero define el presupuesto mensual\"" : "" %>>
+        <i data-lucide="sliders-horizontal"></i>Límite por categoría
     </button>
 </div>
 
-<%
-    if (presupuesto != null) {
-        PresupuestoServicio.NivelAlerta alerta = (PresupuestoServicio.NivelAlerta) request.getAttribute("alerta");
-        BigDecimal disponible = (BigDecimal) request.getAttribute("disponible");
-        BigDecimal total = presupuesto.getMontoPresupuesto();
-        BigDecimal gastado = total.subtract(disponible);
+<% if (presupuesto == null) { %>
+    <article class="surface rounded-2xl p-10 text-center">
+        <p class="text-4xl">🗓️</p>
+        <p class="mt-3 font-semibold">Todavía no has definido un presupuesto para este mes.</p>
+        <p class="mt-1 text-sm muted"><%= editable ? "Define cuánto quieres gastar como máximo y FinanZ te avisará cuando te acerques." : "Solo puedes crear presupuestos del mes actual en adelante." %></p>
+    </article>
+<% } else {
+    BigDecimal gastado = (BigDecimal) request.getAttribute("gastado");
+    BigDecimal disponible = (BigDecimal) request.getAttribute("disponible");
+    BigDecimal sumaLimites = (BigDecimal) request.getAttribute("sumaLimites");
+    PresupuestoServicio.NivelAlerta alerta = (PresupuestoServicio.NivelAlerta) request.getAttribute("alerta");
+    List<LimiteGasto> limites = (List<LimiteGasto>) request.getAttribute("limites");
+    Map<Integer, BigDecimal> gastoPorCategoria = (Map<Integer, BigDecimal>) request.getAttribute("gastoPorCategoria");
 
-        int porcentaje = 0;
-        if (total.compareTo(BigDecimal.ZERO) > 0) {
-            porcentaje = gastado.multiply(new BigDecimal(100)).divide(total, 0, RoundingMode.HALF_UP).intValue();
-        }
-        if (porcentaje > 100) porcentaje = 100;
-        if (porcentaje < 0) porcentaje = 0;
-
-        String colorBarra = "var(--forest)";
-        String bgBadge = "var(--mint)";
-        String colorBadge = "var(--forest)";
-        if (alerta == PresupuestoServicio.NivelAlerta.CERCA) {
-            colorBarra = "var(--sun)"; bgBadge = "#fff2d2"; colorBadge = "#a36a00";
-        } else if (alerta == PresupuestoServicio.NivelAlerta.SUPERADO) {
-            colorBarra = "var(--coral)"; bgBadge = "#ffe2dc"; colorBadge = "#b7432d";
-        }
+    int porcentaje = Formato.porcentaje(gastado, presupuesto.getMontoPresupuesto());
+    String color = "var(--forest)", estado = "Vas bien", chip = "chip-ok";
+    if (alerta == PresupuestoServicio.NivelAlerta.CERCA) {
+        color = "var(--sun)"; estado = "Cerca del límite (80 % o más)"; chip = "chip-alerta";
+    } else if (alerta == PresupuestoServicio.NivelAlerta.SUPERADO) {
+        color = "var(--coral)"; estado = "Presupuesto superado"; chip = "chip-hormiga";
+    }
 %>
-
     <article class="surface mb-6 rounded-2xl p-6">
-        <div class="flex items-start justify-between">
+        <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-                <p class="text-sm font-medium" style="color:var(--muted)">Presupuesto de <%= periodo %></p>
-                <h3 class="mt-1 text-2xl font-bold">S/ <%= total %></h3>
+                <p class="text-sm font-medium muted">Presupuesto mensual</p>
+                <p class="mt-1 text-3xl font-bold"><%= Formato.soles(presupuesto.getMontoPresupuesto()) %></p>
             </div>
-            <span class="rounded-lg px-3 py-2 text-xs font-bold" style="background:<%= bgBadge %>;color:<%= colorBadge %>">
-                <%= porcentaje %>%
-            </span>
+            <span class="chip <%= chip %>" style="font-size:13px;padding:6px 12px"><%= estado %> · <%= porcentaje %> %</span>
         </div>
 
         <div class="mt-6">
-            <div class="mb-2 flex justify-between text-sm">
-                <span>Gastado: <strong>S/ <%= gastado %></strong></span>
-                <span style="color:var(--muted)">Disponible: S/ <%= disponible %></span>
-            </div>
-            <div class="h-4 overflow-hidden rounded-full" style="background:var(--line)">
-                <div class="h-full rounded-full" style="width:<%= porcentaje %>%;background:<%= colorBarra %>"></div>
+            <div class="barra" style="height:16px"><span style="width:<%= Math.min(100, porcentaje) %>%;background:<%= color %>"></span></div>
+            <div class="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+                <p>Gastado: <strong><%= Formato.soles(gastado) %></strong></p>
+                <p>Disponible: <strong style="color:<%= color %>"><%= Formato.soles(disponible) %></strong></p>
+                <p class="muted">Asignado a categorías: <%= Formato.soles(sumaLimites) %></p>
             </div>
         </div>
-
-        <p class="mt-3 text-xs" style="color:var(--muted)">
-            Estado: <strong style="color:<%= colorBarra %>"><%= alerta %></strong>
-        </p>
     </article>
 
     <article class="surface rounded-2xl p-6">
-        <h3 class="mb-1 text-lg font-bold">Límites por categoría</h3>
-        <p class="mb-5 text-sm" style="color:var(--muted)">Define cuánto quieres gastar como máximo en cada categoría.</p>
+        <h3 class="text-lg font-bold">Límites por categoría</h3>
+        <p class="mb-5 mt-1 text-sm muted">Define cuánto quieres gastar como máximo en cada categoría.</p>
 
-        <%
-            List<LimiteGasto> limites = (List<LimiteGasto>) request.getAttribute("limites");
-            List<Categoria> categorias = (List<Categoria>) request.getAttribute("categorias");
-            Map<Integer, BigDecimal> gastoPorCategoria = (Map<Integer, BigDecimal>) request.getAttribute("gastoPorCategoria");
-        %>
-
-        <% if (limites == null || limites.isEmpty()) { %>
-            <p class="py-6 text-center text-sm" style="color:var(--muted)">Todavía no definiste límites por categoría.</p>
+        <% if (limites.isEmpty()) { %>
+            <p class="py-6 text-center text-sm muted">Todavía no definiste límites por categoría.</p>
         <% } else { %>
-            <div class="grid gap-5 md:grid-cols-2">
-                <%
-                    for (LimiteGasto l : limites) {
-                        String nombreCategoria = "Categoría " + l.getIdCategoria();
-                        if (categorias != null) {
-                            for (Categoria c : categorias) {
-                                if (c.getIdCategoria() == l.getIdCategoria()) {
-                                    nombreCategoria = c.getNombreCategoria();
-                                }
-                            }
-                        }
-
-                        BigDecimal gastadoCategoria = (gastoPorCategoria != null && gastoPorCategoria.get(l.getIdCategoria()) != null)
-                                ? gastoPorCategoria.get(l.getIdCategoria()) : BigDecimal.ZERO;
-                        BigDecimal limiteCategoria = l.getMontoLimite();
-
-                        int porcentajeCategoria = 0;
-                        if (limiteCategoria.compareTo(BigDecimal.ZERO) > 0) {
-                            porcentajeCategoria = gastadoCategoria.multiply(new BigDecimal(100))
-                                    .divide(limiteCategoria, 0, RoundingMode.HALF_UP).intValue();
-                        }
-                        boolean superadoCategoria = porcentajeCategoria > 100;
-                        if (porcentajeCategoria > 100) porcentajeCategoria = 100;
-                        if (porcentajeCategoria < 0) porcentajeCategoria = 0;
-
-                        String colorCategoria = "var(--forest)";
-                        if (superadoCategoria) {
-                            colorCategoria = "var(--coral)";
-                        } else if (porcentajeCategoria >= 80) {
-                            colorCategoria = "var(--sun)";
-                        }
-                %>
-                        <article class="rounded-2xl border p-5" style="border-color:var(--line)">
-                            <div class="flex items-start justify-between">
-                                <h4 class="font-bold"><%= nombreCategoria %></h4>
-                                <span class="text-xs font-bold" style="color:<%= colorCategoria %>"><%= porcentajeCategoria %>%</span>
-                            </div>
-                            <p class="mt-1 text-sm" style="color:var(--muted)">
-                                S/ <%= gastadoCategoria %> de S/ <%= limiteCategoria %>
-                            </p>
-                            <div class="mt-3 h-3 overflow-hidden rounded-full" style="background:var(--line)">
-                                <div class="h-full rounded-full" style="width:<%= porcentajeCategoria %>%;background:<%= colorCategoria %>"></div>
-                            </div>
-                            <% if (superadoCategoria) { %>
-                                <p class="mt-2 text-xs font-semibold" style="color:var(--coral)">Superaste el límite de esta categoría.</p>
+            <div class="grid gap-4 md:grid-cols-2">
+            <% for (LimiteGasto l : limites) {
+                BigDecimal gastadoCat = gastoPorCategoria.getOrDefault(l.getIdCategoria(), BigDecimal.ZERO);
+                int pctCat = Formato.porcentaje(gastadoCat, l.getMontoLimite());
+                PresupuestoServicio.NivelAlerta nivelCat = PresupuestoServicio.nivel(gastadoCat, l.getMontoLimite());
+                String colorCat = nivelCat == PresupuestoServicio.NivelAlerta.SUPERADO ? "var(--coral)"
+                        : nivelCat == PresupuestoServicio.NivelAlerta.CERCA ? "var(--sun)" : "var(--forest)";
+            %>
+                <div class="rounded-2xl border p-4" style="border-color:var(--line)">
+                    <div class="flex items-start justify-between gap-2">
+                        <h4 class="font-bold"><%= Html.esc(l.getNombreCategoria()) %></h4>
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs font-bold" style="color:<%= colorCat %>"><%= pctCat %> %</span>
+                            <% if (editable) { %>
+                            <form action="presupuestos" method="post" data-confirmar="¿Eliminar el límite de <%= Html.esc(l.getNombreCategoria()) %>?">
+                                <input type="hidden" name="accion" value="eliminarLimite">
+                                <input type="hidden" name="idLimite" value="<%= l.getIdLimite() %>">
+                                <button type="submit" class="btn btn-icono" aria-label="Eliminar límite"><i data-lucide="x"></i></button>
+                            </form>
                             <% } %>
-                        </article>
-                <%
-                    }
-                %>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-sm muted"><%= Formato.soles(gastadoCat) %> de <%= Formato.soles(l.getMontoLimite()) %></p>
+                    <div class="barra mt-3"><span style="width:<%= Math.min(100, pctCat) %>%;background:<%= colorCat %>"></span></div>
+                    <% if (nivelCat == PresupuestoServicio.NivelAlerta.SUPERADO) { %>
+                        <p class="mt-2 text-xs font-semibold" style="color:var(--coral)">Superaste el límite de esta categoría.</p>
+                    <% } else if (nivelCat == PresupuestoServicio.NivelAlerta.CERCA) { %>
+                        <p class="mt-2 text-xs font-semibold" style="color:var(--sun)">Estás cerca del límite.</p>
+                    <% } %>
+                </div>
+            <% } %>
             </div>
         <% } %>
     </article>
-
-<% } else { %>
-    <p class="py-10 text-center text-sm" style="color:var(--muted)">Todavía no has definido un presupuesto para este período.</p>
 <% } %>
 
 <!-- Modal: presupuesto mensual -->
-<div id="modal-presupuesto-mensual" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,.45)">
+<div id="modal-presupuesto-mensual" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="titulo-presupuesto">
     <div class="surface w-full max-w-sm rounded-2xl p-6">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-lg font-bold">Presupuesto mensual</h3>
-            <button type="button" class="btn-cerrar-modal text-xl leading-none" style="color:var(--muted)">&times;</button>
+            <h3 id="titulo-presupuesto" class="text-lg font-bold">Presupuesto mensual</h3>
+            <button type="button" class="btn btn-icono" data-cerrar-modal aria-label="Cerrar">✕</button>
         </div>
-
-        <form action="PresupuestoServlet" method="post" class="space-y-4">
+        <form action="presupuestos" method="post" class="space-y-4">
             <input type="hidden" name="accion" value="guardarPresupuesto">
-
             <div>
-                <label class="mb-1 block text-sm font-semibold">Período (mes)</label>
-                <input type="month" name="periodo" required min="<%= mesActualTexto %>"
-                       value="<%= periodo != null && !periodo.isBefore(LocalDate.now().withDayOfMonth(1)) ? periodo.toString().substring(0, 7) : mesActualTexto %>"
-                       class="focus-ring w-full rounded-xl border px-3 py-2.5 text-sm">
-                <p class="mt-1 text-xs" style="color:var(--muted)">Solo puedes elegir el mes actual en adelante. Si repites un mes, se actualiza con el último monto.</p>
+                <label class="etiqueta" for="periodo-presupuesto">Mes</label>
+                <input type="month" id="periodo-presupuesto" name="periodo" required min="<%= YearMonth.now() %>"
+                       value="<%= editable ? mes : YearMonth.now() %>" class="campo">
+                <p class="mt-1 text-xs muted">Solo el mes actual en adelante. Si el mes ya tiene presupuesto, se actualiza.</p>
             </div>
-
             <div>
-                <label class="mb-1 block text-sm font-semibold">Monto del presupuesto (S/)</label>
-                <input type="number" step="0.01" min="0.01" name="montoPresupuesto" required
-                       class="focus-ring w-full rounded-xl border px-3 py-2.5 text-sm">
+                <label class="etiqueta" for="montoPresupuesto">Monto (S/)</label>
+                <input type="number" id="montoPresupuesto" name="montoPresupuesto" step="0.01" min="0.01" required class="campo"
+                       value="<%= presupuesto != null ? presupuesto.getMontoPresupuesto().toPlainString() : "" %>">
             </div>
-
-            <button type="submit" class="w-full rounded-xl px-4 py-3 font-bold" style="background:#38b6ff;color:white">
-                Guardar presupuesto
-            </button>
+            <button type="submit" class="btn btn-primario w-full">Guardar presupuesto</button>
         </form>
     </div>
 </div>
 
 <!-- Modal: límite por categoría -->
-<div id="modal-limite-categoria" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,.45)">
+<% if (presupuesto != null && editable) { %>
+<div id="modal-limite-categoria" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="titulo-limite">
     <div class="surface w-full max-w-sm rounded-2xl p-6">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-lg font-bold">Límite por categoría</h3>
-            <button type="button" class="btn-cerrar-modal text-xl leading-none" style="color:var(--muted)">&times;</button>
+            <h3 id="titulo-limite" class="text-lg font-bold">Límite por categoría</h3>
+            <button type="button" class="btn btn-icono" data-cerrar-modal aria-label="Cerrar">✕</button>
         </div>
-
-        <% if (presupuesto != null) { %>
-            <form action="PresupuestoServlet" method="post" class="space-y-4">
-                <input type="hidden" name="accion" value="guardarLimite">
-                <input type="hidden" name="periodo" value="<%= periodo.toString().substring(0, 7) %>">
-                <input type="hidden" name="idPresupuesto" value="<%= presupuesto.getIdPresupuesto() %>">
-
-                <div>
-                    <label class="mb-1 block text-sm font-semibold">Categoría (gasto)</label>
-                    <select name="idCategoria" class="focus-ring w-full rounded-xl border px-3 py-2.5 text-sm">
-                        <%
-                            List<Categoria> categoriasGasto = (List<Categoria>) request.getAttribute("categoriasGasto");
-                            if (categoriasGasto != null) {
-                                for (Categoria c : categoriasGasto) {
-                        %>
-                                    <option value="<%= c.getIdCategoria() %>"><%= c.getNombreCategoria() %></option>
-                        <%
-                                }
-                            }
-                        %>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="mb-1 block text-sm font-semibold">Límite (S/)</label>
-                    <input type="number" step="0.01" min="0.01" name="montoLimite" required
-                           class="focus-ring w-full rounded-xl border px-3 py-2.5 text-sm">
-                </div>
-
-                <button type="submit" class="w-full rounded-xl px-4 py-3 font-bold" style="background:#38b6ff;color:white">
-                    Guardar límite
-                </button>
-            </form>
-        <% } %>
+        <form action="presupuestos" method="post" class="space-y-4">
+            <input type="hidden" name="accion" value="guardarLimite">
+            <input type="hidden" name="periodo" value="<%= mes %>">
+            <input type="hidden" name="idPresupuesto" value="<%= presupuesto.getIdPresupuesto() %>">
+            <div>
+                <label class="etiqueta" for="idCategoria-limite">Categoría de gasto</label>
+                <select id="idCategoria-limite" name="idCategoria" class="campo">
+                    <% for (Categoria c : categoriasGasto) { %>
+                    <option value="<%= c.getIdCategoria() %>"><%= Html.esc(c.getNombreCategoria()) %></option>
+                    <% } %>
+                </select>
+            </div>
+            <div>
+                <label class="etiqueta" for="montoLimite">Límite (S/)</label>
+                <input type="number" id="montoLimite" name="montoLimite" step="0.01" min="0.01" required class="campo">
+                <p class="mt-1 text-xs muted">La suma de los límites no puede superar el presupuesto mensual.</p>
+            </div>
+            <button type="submit" class="btn btn-verde w-full">Guardar límite</button>
+        </form>
     </div>
 </div>
+<% } %>

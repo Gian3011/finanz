@@ -7,6 +7,7 @@ public class LimiteGasto {
     private int idLimite;
     private int idPresupuesto;
     private int idCategoria;
+    private String nombreCategoria; // solo lectura (JOIN con categoria)
     private BigDecimal montoLimite;
 
     public LimiteGasto() {
@@ -40,6 +41,14 @@ public class LimiteGasto {
 
     public void setIdCategoria(int idCategoria) {
         this.idCategoria = idCategoria;
+    }
+
+    public String getNombreCategoria() {
+        return nombreCategoria;
+    }
+
+    public void setNombreCategoria(String nombreCategoria) {
+        this.nombreCategoria = nombreCategoria;
     }
 
     public BigDecimal getMontoLimite() {

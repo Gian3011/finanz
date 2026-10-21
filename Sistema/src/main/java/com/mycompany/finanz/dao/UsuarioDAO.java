@@ -7,13 +7,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDate;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class UsuarioDAO {
 
     public int insertar(Usuario usuario) throws SQLException {
-        String sql = "INSERT INTO usuario (nombres, apellidos, email, fecha_registro, password_hash, "
-                + "google_id, proveedor, foto_perfil) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO usuario (nombres, apellidos, email, password_hash) VALUES (?, ?, ?, ?)";
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -21,19 +21,15 @@ public class UsuarioDAO {
             ps.setString(1, usuario.getNombres());
             ps.setString(2, usuario.getApellidos());
             ps.setString(3, usuario.getEmail());
-            ps.setObject(4, usuario.getFechaRegistro() != null ? usuario.getFechaRegistro() : LocalDate.now());
-            ps.setString(5, usuario.getPasswordHash());
-            ps.setString(6, usuario.getGoogleId());
-            ps.setString(7, usuario.getProveedor());
-            ps.setString(8, usuario.getFotoPerfil());
-
+            ps.setString(4, usuario.getPasswordHash());
             ps.executeUpdate();
 
-            ResultSet generatedKeys = ps.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                int idGenerado = generatedKeys.getInt(1);
-                usuario.setIdUsuario(idGenerado);
-                return idGenerado;
+            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int idGenerado = generatedKeys.getInt(1);
+                    usuario.setIdUsuario(idGenerado);
+                    return idGenerado;
+                }
             }
             return -1;
         }
@@ -46,12 +42,9 @@ public class UsuarioDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, idUsuario);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return mapear(rs);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapear(rs) : null;
             }
-            return null;
         }
     }
 
@@ -62,80 +55,47 @@ public class UsuarioDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, email);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return mapear(rs);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapear(rs) : null;
             }
-            return null;
         }
     }
 
-    public Usuario buscarPorGoogleId(String googleId) throws SQLException {
-        String sql = "SELECT * FROM usuario WHERE google_id = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, googleId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return mapear(rs);
-            }
-            return null;
-        }
-    }
-
-    public void actualizarIntentosFallidos(int idUsuario, int intentos) throws SQLException {
-        String sql = "UPDATE usuario SET intentos_fallidos = ? WHERE id_usuario = ?";
+    /** Guarda el contador de intentos fallidos y, si corresponde, hasta cuándo queda bloqueada la cuenta. */
+    public void actualizarIntentos(int idUsuario, int intentos, LocalDateTime bloqueadoHasta) throws SQLException {
+        String sql = "UPDATE usuario SET intentos_fallidos = ?, bloqueado_hasta = ? WHERE id_usuario = ?";
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, intentos);
+            ps.setTimestamp(2, bloqueadoHasta == null ? null : Timestamp.valueOf(bloqueadoHasta));
+            ps.setInt(3, idUsuario);
+            ps.executeUpdate();
+        }
+    }
+
+    public void actualizarPerfil(int idUsuario, String nombres, String apellidos) throws SQLException {
+        String sql = "UPDATE usuario SET nombres = ?, apellidos = ? WHERE id_usuario = ?";
+
+        try (Connection con = ConexionDB.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, nombres);
+            ps.setString(2, apellidos);
+            ps.setInt(3, idUsuario);
+            ps.executeUpdate();
+        }
+    }
+
+    public void actualizarPassword(int idUsuario, String passwordHash) throws SQLException {
+        String sql = "UPDATE usuario SET password_hash = ? WHERE id_usuario = ?";
+
+        try (Connection con = ConexionDB.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, passwordHash);
             ps.setInt(2, idUsuario);
-            ps.executeUpdate();
-        }
-    }
-
-    public void actualizarBloqueado(int idUsuario, boolean bloqueado) throws SQLException {
-        String sql = "UPDATE usuario SET bloqueado = ? WHERE id_usuario = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setBoolean(1, bloqueado);
-            ps.setInt(2, idUsuario);
-            ps.executeUpdate();
-        }
-    }
-
-    public void actualizar(Usuario usuario) throws SQLException {
-        String sql = "UPDATE usuario SET nombres = ?, apellidos = ?, email = ?, password_hash = ?, "
-                + "foto_perfil = ? WHERE id_usuario = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, usuario.getNombres());
-            ps.setString(2, usuario.getApellidos());
-            ps.setString(3, usuario.getEmail());
-            ps.setString(4, usuario.getPasswordHash());
-            ps.setString(5, usuario.getFotoPerfil());
-            ps.setInt(6, usuario.getIdUsuario());
-
-            ps.executeUpdate();
-        }
-    }
-
-    public void eliminar(int idUsuario) throws SQLException {
-        String sql = "DELETE FROM usuario WHERE id_usuario = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, idUsuario);
             ps.executeUpdate();
         }
     }
@@ -146,19 +106,13 @@ public class UsuarioDAO {
         u.setNombres(rs.getString("nombres"));
         u.setApellidos(rs.getString("apellidos"));
         u.setEmail(rs.getString("email"));
-
-        java.sql.Date fecha = rs.getDate("fecha_registro");
-        if (fecha != null) {
-            u.setFechaRegistro(fecha.toLocalDate());
-        }
-
         u.setPasswordHash(rs.getString("password_hash"));
-        u.setGoogleId(rs.getString("google_id"));
-        u.setProveedor(rs.getString("proveedor"));
-        u.setFotoPerfil(rs.getString("foto_perfil"));
         u.setIntentosFallidos(rs.getInt("intentos_fallidos"));
-        u.setBloqueado(rs.getBoolean("bloqueado"));
 
+        Timestamp registro = rs.getTimestamp("fecha_registro");
+        u.setFechaRegistro(registro == null ? null : registro.toLocalDateTime());
+        Timestamp bloqueo = rs.getTimestamp("bloqueado_hasta");
+        u.setBloqueadoHasta(bloqueo == null ? null : bloqueo.toLocalDateTime());
         return u;
     }
 }

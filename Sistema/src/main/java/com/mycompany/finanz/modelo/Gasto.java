@@ -5,7 +5,7 @@ import java.time.LocalDate;
 
 public class Gasto extends Movimiento {
 
-    private Boolean esGastoHormiga; // Boolean (no boolean) para poder representar null
+    private boolean esGastoHormiga;
 
     public Gasto() {
         super();
@@ -22,11 +22,11 @@ public class Gasto extends Movimiento {
         return monto.negate(); // un gasto resta del balance
     }
 
-    public Boolean getEsGastoHormiga() {
+    public boolean isEsGastoHormiga() {
         return esGastoHormiga;
     }
 
-    public void setEsGastoHormiga(Boolean esGastoHormiga) {
+    public void setEsGastoHormiga(boolean esGastoHormiga) {
         this.esGastoHormiga = esGastoHormiga;
     }
 }

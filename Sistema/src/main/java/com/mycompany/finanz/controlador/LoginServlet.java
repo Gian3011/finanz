@@ -1,6 +1,7 @@
 package com.mycompany.finanz.controlador;
 
 import com.mycompany.finanz.dao.UsuarioDAO;
+import com.mycompany.finanz.filtro.SeguridadFiltro;
 import com.mycompany.finanz.modelo.Usuario;
 import com.mycompany.finanz.servicio.CredencialesInvalidasException;
 import com.mycompany.finanz.servicio.CuentaBloqueadaException;
@@ -14,18 +15,24 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.sql.SQLException;
+import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-@WebServlet(name = "LoginServlet", urlPatterns = {"/LoginServlet"})
+@WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
 
-    private final UsuarioDAO usuarioDAO = new UsuarioDAO();
-    private final LoginServicio loginServicio = new LoginServicio(usuarioDAO);
+    private static final Logger LOG = Logger.getLogger(LoginServlet.class.getName());
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    private final LoginServicio loginServicio = new LoginServicio(new UsuarioDAO());
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Si alguien entra directo a /LoginServlet por GET, lo mandamos al formulario
+        // Si alguien entra directo a /login por GET, lo mandamos al formulario
         response.sendRedirect("Login.jsp");
     }
 
@@ -38,26 +45,40 @@ public class LoginServlet extends HttpServlet {
 
         try {
             Usuario usuario = loginServicio.login(correo, contrasena);
-
-            // Login exitoso: crear sesión y guardar datos básicos del usuario
-            HttpSession session = request.getSession();
-            session.setAttribute("idUsuario", usuario.getIdUsuario());
-            session.setAttribute("nombreUsuario", usuario.getNombres());
-
+            iniciarSesion(request, usuario);
             response.sendRedirect("dashboard.jsp");
 
-        } catch (CredencialesInvalidasException e) {
-            request.setAttribute("error", e.getMessage());
-            request.getRequestDispatcher("Login.jsp").forward(request, response);
-
-        } catch (CuentaBloqueadaException e) {
-            request.setAttribute("error", e.getMessage());
-            request.getRequestDispatcher("Login.jsp").forward(request, response);
+        } catch (CredencialesInvalidasException | CuentaBloqueadaException e) {
+            volverAlLogin(request, response, e.getMessage(), correo);
 
         } catch (SQLException e) {
-            e.printStackTrace();
-            request.setAttribute("error", "Ocurrió un error al conectar con el servidor. Intenta nuevamente.");
-            request.getRequestDispatcher("Login.jsp").forward(request, response);
+            LOG.log(Level.SEVERE, "Error al iniciar sesión", e);
+            volverAlLogin(request, response, "Ocurrió un error al conectar con el servidor. Intenta nuevamente.", correo);
         }
+    }
+
+    /**
+     * Crea una sesión nueva (evita la "fijación de sesión") con los datos del
+     * usuario y un token aleatorio para proteger los formularios contra CSRF.
+     */
+    static void iniciarSesion(HttpServletRequest request, Usuario usuario) {
+        HttpSession anterior = request.getSession(false);
+        if (anterior != null) {
+            anterior.invalidate();
+        }
+        HttpSession session = request.getSession(true);
+        session.setAttribute(SeguridadFiltro.ATRIBUTO_USUARIO, usuario.getIdUsuario());
+        session.setAttribute("nombreUsuario", usuario.getNombres());
+
+        byte[] token = new byte[32];
+        RANDOM.nextBytes(token);
+        session.setAttribute(SeguridadFiltro.ATRIBUTO_CSRF, Base64.getUrlEncoder().withoutPadding().encodeToString(token));
+    }
+
+    private void volverAlLogin(HttpServletRequest request, HttpServletResponse response, String error, String correo)
+            throws ServletException, IOException {
+        request.setAttribute("error", error);
+        request.setAttribute("correo", correo);
+        request.getRequestDispatcher("Login.jsp").forward(request, response);
     }
 }

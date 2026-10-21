@@ -21,3 +21,6 @@ desktop.ini
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Configuración local de Claude Code
+.claude/

@@ -12,6 +12,11 @@ import java.util.List;
 
 public class MetaAhorroDAO {
 
+    /** Incluye el total aportado a cada meta para mostrar su progreso. */
+    private static final String SELECT_BASE = "SELECT m.*, "
+            + "(SELECT COALESCE(SUM(a.monto_aporte), 0) FROM aporte_ahorro a WHERE a.id_meta = m.id_meta) monto_ahorrado "
+            + "FROM meta_ahorro m ";
+
     public int insertar(MetaAhorro meta) throws SQLException {
         String sql = "INSERT INTO meta_ahorro (id_usuario, nombre_meta, monto_objetivo, fecha_objetivo, estado) "
                 + "VALUES (?, ?, ?, ?, ?)";
@@ -26,62 +31,47 @@ public class MetaAhorroDAO {
             ps.setString(5, meta.getEstado());
             ps.executeUpdate();
 
-            ResultSet generatedKeys = ps.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                int idGenerado = generatedKeys.getInt(1);
-                meta.setIdMeta(idGenerado);
-                return idGenerado;
+            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int idGenerado = generatedKeys.getInt(1);
+                    meta.setIdMeta(idGenerado);
+                    return idGenerado;
+                }
             }
             return -1;
         }
     }
 
-    public MetaAhorro buscarPorId(int idMeta) throws SQLException {
-        String sql = "SELECT * FROM meta_ahorro WHERE id_meta = ?";
+    /** Busca la meta solo si pertenece al usuario. */
+    public MetaAhorro buscarPorId(int idMeta, int idUsuario) throws SQLException {
+        String sql = SELECT_BASE + "WHERE m.id_meta = ? AND m.id_usuario = ?";
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, idMeta);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return mapear(rs);
+            ps.setInt(2, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapear(rs) : null;
             }
-            return null;
         }
     }
 
     public List<MetaAhorro> listarPorUsuario(int idUsuario) throws SQLException {
-        String sql = "SELECT * FROM meta_ahorro WHERE id_usuario = ? ORDER BY fecha_objetivo ASC";
+        String sql = SELECT_BASE + "WHERE m.id_usuario = ? ORDER BY m.estado DESC, m.fecha_objetivo ASC";
         List<MetaAhorro> lista = new ArrayList<>();
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, idUsuario);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                lista.add(mapear(rs));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapear(rs));
+                }
             }
         }
         return lista;
-    }
-
-    public void actualizar(MetaAhorro meta) throws SQLException {
-        String sql = "UPDATE meta_ahorro SET nombre_meta = ?, monto_objetivo = ?, fecha_objetivo = ?, estado = ? "
-                + "WHERE id_meta = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, meta.getNombreMeta());
-            ps.setBigDecimal(2, meta.getMontoObjetivo());
-            ps.setObject(3, meta.getFechaObjetivo());
-            ps.setString(4, meta.getEstado());
-            ps.setInt(5, meta.getIdMeta());
-            ps.executeUpdate();
-        }
     }
 
     public void actualizarEstado(int idMeta, String estado) throws SQLException {
@@ -96,19 +86,16 @@ public class MetaAhorroDAO {
         }
     }
 
-    /**
-     * Ojo: si la meta tiene aportes asociados (tabla aporte_ahorro), MySQL rechazará
-     * el borrado por la Foreign Key. Elimina primero los aportes con
-     * AporteAhorroDAO.eliminarPorMeta() y luego llama a este método.
-     */
-    public void eliminar(int idMeta) throws SQLException {
-        String sql = "DELETE FROM meta_ahorro WHERE id_meta = ?";
+    /** Elimina la meta del usuario; sus aportes se borran en cascada (ON DELETE CASCADE). */
+    public boolean eliminar(int idMeta, int idUsuario) throws SQLException {
+        String sql = "DELETE FROM meta_ahorro WHERE id_meta = ? AND id_usuario = ?";
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, idMeta);
-            ps.executeUpdate();
+            ps.setInt(2, idUsuario);
+            return ps.executeUpdate() > 0;
         }
     }
 
@@ -118,13 +105,11 @@ public class MetaAhorroDAO {
         m.setIdUsuario(rs.getInt("id_usuario"));
         m.setNombreMeta(rs.getString("nombre_meta"));
         m.setMontoObjetivo(rs.getBigDecimal("monto_objetivo"));
-
-        java.sql.Date fecha = rs.getDate("fecha_objetivo");
-        if (fecha != null) {
-            m.setFechaObjetivo(fecha.toLocalDate());
-        }
-
+        m.setFechaObjetivo(rs.getDate("fecha_objetivo").toLocalDate());
         m.setEstado(rs.getString("estado"));
+        java.sql.Date creacion = rs.getDate("fecha_creacion");
+        m.setFechaCreacion(creacion == null ? null : creacion.toLocalDate());
+        m.setMontoAhorrado(rs.getBigDecimal("monto_ahorrado"));
         return m;
     }
 }

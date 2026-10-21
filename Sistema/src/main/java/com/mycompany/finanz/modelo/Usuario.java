@@ -1,6 +1,6 @@
 package com.mycompany.finanz.modelo;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Usuario {
 
@@ -8,13 +8,10 @@ public class Usuario {
     private String nombres;
     private String apellidos;
     private String email;
-    private LocalDate fechaRegistro;
-    private String passwordHash;   // null si el usuario se registró con Google
-    private String googleId;       // null si el usuario se registró de forma local
-    private String proveedor;      // "local" o "google"
-    private String fotoPerfil;
+    private LocalDateTime fechaRegistro;
+    private String passwordHash;
     private int intentosFallidos;
-    private boolean bloqueado;
+    private LocalDateTime bloqueadoHasta; // null si la cuenta no está bloqueada
 
     public Usuario() {
     }
@@ -23,6 +20,15 @@ public class Usuario {
         this.nombres = nombres;
         this.apellidos = apellidos;
         this.email = email;
+    }
+
+    /** true si la cuenta sigue bloqueada en este momento. */
+    public boolean estaBloqueado() {
+        return bloqueadoHasta != null && bloqueadoHasta.isAfter(LocalDateTime.now());
+    }
+
+    public String getNombreCompleto() {
+        return nombres + (apellidos != null && !apellidos.isBlank() ? " " + apellidos : "");
     }
 
     public int getIdUsuario() {
@@ -57,11 +63,11 @@ public class Usuario {
         this.email = email;
     }
 
-    public LocalDate getFechaRegistro() {
+    public LocalDateTime getFechaRegistro() {
         return fechaRegistro;
     }
 
-    public void setFechaRegistro(LocalDate fechaRegistro) {
+    public void setFechaRegistro(LocalDateTime fechaRegistro) {
         this.fechaRegistro = fechaRegistro;
     }
 
@@ -73,30 +79,6 @@ public class Usuario {
         this.passwordHash = passwordHash;
     }
 
-    public String getGoogleId() {
-        return googleId;
-    }
-
-    public void setGoogleId(String googleId) {
-        this.googleId = googleId;
-    }
-
-    public String getProveedor() {
-        return proveedor;
-    }
-
-    public void setProveedor(String proveedor) {
-        this.proveedor = proveedor;
-    }
-
-    public String getFotoPerfil() {
-        return fotoPerfil;
-    }
-
-    public void setFotoPerfil(String fotoPerfil) {
-        this.fotoPerfil = fotoPerfil;
-    }
-
     public int getIntentosFallidos() {
         return intentosFallidos;
     }
@@ -105,11 +87,11 @@ public class Usuario {
         this.intentosFallidos = intentosFallidos;
     }
 
-    public boolean isBloqueado() {
-        return bloqueado;
+    public LocalDateTime getBloqueadoHasta() {
+        return bloqueadoHasta;
     }
 
-    public void setBloqueado(boolean bloqueado) {
-        this.bloqueado = bloqueado;
+    public void setBloqueadoHasta(LocalDateTime bloqueadoHasta) {
+        this.bloqueadoHasta = bloqueadoHasta;
     }
 }

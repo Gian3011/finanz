@@ -1,14 +1,14 @@
 package com.mycompany.finanz.util;
- 
-import java.util.Random;
- 
+
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * Utilidad para obtener frases motivacionales de finanzas personales.
  * Se usa en la pantalla de login para mostrar una frase distinta
  * cada vez que el usuario ingresa a la página.
  */
-public class Fraseutil {
- 
+public final class FraseUtil {
+
     private static final String[] FRASES = {
         "Cada sol que ahorras hoy es un paso más hacia la libertad financiera de mañana.",
         "Un pequeño ahorro hoy es un gran respiro mañana.",
@@ -22,15 +22,12 @@ public class Fraseutil {
         "Tus finanzas de hoy son el reflejo de tus decisiones de ayer.",
         "Invertir en tus finanzas es invertir en tu futuro yo."
     };
- 
-    private static final Random RANDOM = new Random();
- 
-    private Fraseutil() {
+
+    private FraseUtil() {
         // Clase de utilidad, no se instancia
     }
- 
+
     public static String obtenerAleatoria() {
-        int indice = RANDOM.nextInt(FRASES.length);
-        return FRASES[indice];
+        return FRASES[ThreadLocalRandom.current().nextInt(FRASES.length)];
     }
 }

@@ -1,0 +1,17 @@
+<%-- Mensajes de resultado de la última acción (se incluye al inicio de cada sección) --%>
+<% if (request.getAttribute("error") != null) { %>
+<p class="mensaje-error mb-4" role="alert"><%= com.mycompany.finanz.util.Html.esc(request.getAttribute("error")) %></p>
+<% } %>
+<% if (request.getAttribute("exito") != null) { %>
+<p class="mensaje mensaje-exito mb-4" role="status"><%= com.mycompany.finanz.util.Html.esc(request.getAttribute("exito")) %></p>
+<% } %>
+<%
+    java.util.List<?> avisosLista = (java.util.List<?>) request.getAttribute("avisos");
+    if (avisosLista != null) {
+        for (Object aviso : avisosLista) {
+%>
+<p class="mensaje mensaje-aviso mb-4" role="alert">&#9888; <%= com.mycompany.finanz.util.Html.esc(aviso) %></p>
+<%
+        }
+    }
+%>

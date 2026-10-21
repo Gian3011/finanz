@@ -5,17 +5,20 @@ import com.mycompany.finanz.modelo.Gasto;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 /**
  * Regla de negocio: determina si un gasto es "gasto hormiga".
- * Un gasto se considera hormiga si su monto es bajo Y se repite
- * con frecuencia en la misma categoría dentro de un período reciente.
+ * Un gasto se considera hormiga si su monto es bajo (menos de S/ 20) Y en
+ * los últimos 30 días hubo al menos 5 gastos pequeños en la misma categoría
+ * (contando el nuevo). Cuando el patrón se confirma, también se marcan los
+ * gastos pequeños anteriores de esa categoría dentro de la ventana.
  */
 public class GastoHormigaServicio {
 
-    private static final BigDecimal UMBRAL_MONTO = new BigDecimal("20.00");
-    private static final int UMBRAL_FRECUENCIA = 5; // veces en el período
-    private static final int DIAS_PERIODO = 30;
+    public static final BigDecimal UMBRAL_MONTO = new BigDecimal("20.00");
+    public static final int UMBRAL_FRECUENCIA = 5;
+    public static final int DIAS_PERIODO = 30;
 
     private final MovimientoDAO movimientoDAO;
 
@@ -23,27 +26,29 @@ public class GastoHormigaServicio {
         this.movimientoDAO = movimientoDAO;
     }
 
-    /**
-     * Evalúa un gasto recién ingresado. Se llama justo antes de guardarlo.
-     *
-     * Nota: en gastos nuevos de una categoría poco usada, la frecuencia
-     * acumulada aún puede ser baja, así que este gasto podría no marcarse
-     * como hormiga todavía aunque el patrón se confirme más adelante.
-     * Para eso existe reevaluarGastosDelUsuario().
-     */
+    /** Criterio de monto: solo los gastos pequeños pueden ser hormiga. */
+    public static boolean esMontoPequeno(BigDecimal monto) {
+        return monto != null && monto.compareTo(UMBRAL_MONTO) < 0;
+    }
+
+    /** Evalúa un gasto antes de guardarlo. */
     public boolean evaluarGastoHormiga(Gasto gasto) throws SQLException {
-        // Criterio 1: monto bajo
-        if (gasto.getMonto().compareTo(UMBRAL_MONTO) >= 0) {
+        if (!esMontoPequeno(gasto.getMonto())) {
             return false; // un gasto "grande" no es hormiga, sin importar la frecuencia
         }
 
-        // Criterio 2: frecuencia en la misma categoría, últimos 30 días
-        int frecuencia = movimientoDAO.contarGastosPorCategoriaEnPeriodo(
-                gasto.getIdUsuario(),
-                gasto.getIdCategoria(),
-                DIAS_PERIODO
-        );
+        LocalDate hasta = gasto.getFecha();
+        LocalDate desde = hasta.minusDays(DIAS_PERIODO - 1L);
+        int anteriores = movimientoDAO.contarGastosPequenos(
+                gasto.getIdUsuario(), gasto.getIdCategoria(), UMBRAL_MONTO, desde, hasta);
 
-        return frecuencia >= UMBRAL_FRECUENCIA;
+        return anteriores + 1 >= UMBRAL_FRECUENCIA;
+    }
+
+    /** Una vez guardado un gasto hormiga, marca también los gastos pequeños previos del patrón. */
+    public void marcarPatron(Gasto gasto) throws SQLException {
+        LocalDate hasta = gasto.getFecha();
+        movimientoDAO.marcarGastosPequenosComoHormiga(gasto.getIdUsuario(), gasto.getIdCategoria(),
+                UMBRAL_MONTO, hasta.minusDays(DIAS_PERIODO - 1L), hasta);
     }
 }

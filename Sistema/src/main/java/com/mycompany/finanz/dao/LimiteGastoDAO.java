@@ -12,6 +12,9 @@ import java.util.List;
 
 public class LimiteGastoDAO {
 
+    private static final String SELECT_BASE = "SELECT l.*, c.nombre_categoria FROM limite_gasto l "
+            + "JOIN categoria c ON c.id_categoria = l.id_categoria ";
+
     public int insertar(LimiteGasto limite) throws SQLException {
         String sql = "INSERT INTO limite_gasto (id_presupuesto, id_categoria, monto_limite) VALUES (?, ?, ?)";
 
@@ -23,106 +26,75 @@ public class LimiteGastoDAO {
             ps.setBigDecimal(3, limite.getMontoLimite());
             ps.executeUpdate();
 
-            ResultSet generatedKeys = ps.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                int idGenerado = generatedKeys.getInt(1);
-                limite.setIdLimite(idGenerado);
-                return idGenerado;
+            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int idGenerado = generatedKeys.getInt(1);
+                    limite.setIdLimite(idGenerado);
+                    return idGenerado;
+                }
             }
             return -1;
         }
     }
 
-    public LimiteGasto buscarPorId(int idLimite) throws SQLException {
-        String sql = "SELECT * FROM limite_gasto WHERE id_limite = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, idLimite);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return mapear(rs);
-            }
-            return null;
-        }
-    }
-
     public List<LimiteGasto> listarPorPresupuesto(int idPresupuesto) throws SQLException {
-        String sql = "SELECT * FROM limite_gasto WHERE id_presupuesto = ?";
+        String sql = SELECT_BASE + "WHERE l.id_presupuesto = ? ORDER BY c.nombre_categoria";
         List<LimiteGasto> lista = new ArrayList<>();
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, idPresupuesto);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                lista.add(mapear(rs));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapear(rs));
+                }
             }
         }
         return lista;
     }
 
     /**
-     * Busca el límite de una categoría específica dentro de un presupuesto.
-     * Lo usará el Servicio para verificar si un gasto supera el límite de su categoría.
+     * Busca el límite de una categoría dentro de un presupuesto.
      * Devuelve null si esa categoría no tiene límite definido.
      */
     public LimiteGasto buscarPorPresupuestoYCategoria(int idPresupuesto, int idCategoria) throws SQLException {
-        String sql = "SELECT * FROM limite_gasto WHERE id_presupuesto = ? AND id_categoria = ?";
+        String sql = SELECT_BASE + "WHERE l.id_presupuesto = ? AND l.id_categoria = ?";
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, idPresupuesto);
             ps.setInt(2, idCategoria);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return mapear(rs);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapear(rs) : null;
             }
-            return null;
         }
     }
 
-    public void actualizar(LimiteGasto limite) throws SQLException {
-        String sql = "UPDATE limite_gasto SET id_categoria = ?, monto_limite = ? WHERE id_limite = ?";
+    public void actualizarMonto(LimiteGasto limite) throws SQLException {
+        String sql = "UPDATE limite_gasto SET monto_limite = ? WHERE id_limite = ?";
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setInt(1, limite.getIdCategoria());
-            ps.setBigDecimal(2, limite.getMontoLimite());
-            ps.setInt(3, limite.getIdLimite());
+            ps.setBigDecimal(1, limite.getMontoLimite());
+            ps.setInt(2, limite.getIdLimite());
             ps.executeUpdate();
         }
     }
 
-    public void eliminar(int idLimite) throws SQLException {
-        String sql = "DELETE FROM limite_gasto WHERE id_limite = ?";
+    /** Elimina un límite solo si su presupuesto pertenece al usuario. */
+    public boolean eliminar(int idLimite, int idUsuario) throws SQLException {
+        String sql = "DELETE l FROM limite_gasto l JOIN presupuesto p ON p.id_presupuesto = l.id_presupuesto "
+                + "WHERE l.id_limite = ? AND p.id_usuario = ?";
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, idLimite);
-            ps.executeUpdate();
-        }
-    }
-
-    /**
-     * Elimina todos los límites de un presupuesto. Se usa antes de borrar el presupuesto
-     * para no violar la Foreign Key.
-     */
-    public void eliminarPorPresupuesto(int idPresupuesto) throws SQLException {
-        String sql = "DELETE FROM limite_gasto WHERE id_presupuesto = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, idPresupuesto);
-            ps.executeUpdate();
+            ps.setInt(2, idUsuario);
+            return ps.executeUpdate() > 0;
         }
     }
 
@@ -131,6 +103,7 @@ public class LimiteGastoDAO {
         l.setIdLimite(rs.getInt("id_limite"));
         l.setIdPresupuesto(rs.getInt("id_presupuesto"));
         l.setIdCategoria(rs.getInt("id_categoria"));
+        l.setNombreCategoria(rs.getString("nombre_categoria"));
         l.setMontoLimite(rs.getBigDecimal("monto_limite"));
         return l;
     }

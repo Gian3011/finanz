@@ -3,9 +3,35 @@
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
    version="5.0">
+
+    <display-name>FinanZ</display-name>
+
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
     <session-config>
-        <session-timeout>
-            30
-        </session-timeout>
+        <!-- La sesión expira tras 30 minutos de inactividad -->
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <!-- JavaScript no puede leer la cookie de sesión -->
+            <http-only>true</http-only>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
     </session-config>
+
+    <jsp-config>
+        <jsp-property-group>
+            <url-pattern>*.jsp</url-pattern>
+            <url-pattern>*.jspf</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+            <!-- Quita las líneas en blanco que dejan las directivas (respuestas más livianas) -->
+            <trim-directive-whitespaces>true</trim-directive-whitespaces>
+        </jsp-property-group>
+    </jsp-config>
+
+    <error-page>
+        <error-code>404</error-code>
+        <location>/index.jsp</location>
+    </error-page>
 </web-app>

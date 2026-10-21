@@ -1,0 +1,7 @@
+# Normaliza los saltos de línea (el script de Codespaces debe tener LF)
+* text=auto
+*.sh text eol=lf
+*.yml text eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
