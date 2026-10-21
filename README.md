@@ -1,7 +1,7 @@
 # FinanZ – Plataforma Web de Educación y Gestión Financiera Personal
 
-[![Abrir en GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/__REPO__?quickstart=1)
-[![CI](https://github.com/__REPO__/actions/workflows/ci.yml/badge.svg)](https://github.com/__REPO__/actions/workflows/ci.yml)
+[![Abrir en GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Gian3011/finanz?quickstart=1)
+[![CI](https://github.com/Gian3011/finanz/actions/workflows/ci.yml/badge.svg)](https://github.com/Gian3011/finanz/actions/workflows/ci.yml)
 
 Proyecto del curso **Integrador I: Sistemas Software** – Universidad Tecnológica del Perú (2026).
 
@@ -9,7 +9,7 @@ FinanZ permite registrar ingresos y gastos, planificar presupuestos con alertas,
 detectar gastos hormiga, simular escenarios de ahorro, comparar periodos, exportar reportes en PDF y
 aprender finanzas personales con lecciones y cuestionarios.
 
-🌐 **Página del proyecto:** https://__USUARIO__.github.io/__NOMBRE_REPO__/
+🌐 **Página del proyecto:** https://gian3011.github.io/finanz/
 
 ---
 
