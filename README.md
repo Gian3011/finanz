@@ -104,7 +104,7 @@ db/db_finanz.sql      Script de la base de datos con datos de demostración
 **Requisitos:** JDK 17, Apache NetBeans 19, MySQL Server 8.0, GlassFish 6.2.5.
 
 1. **Base de datos:** abre `db/db_finanz.sql` en MySQL Workbench y ejecútalo completo (⚡).
-   Crea la base `db_finanz` con 17 tablas y datos de demostración.
+   Crea la base `db_finanz` con 18 tablas y datos de demostración.
 2. **Credenciales:** copia `Sistema/src/main/resources/db.properties.example` como `db.properties`
    (misma carpeta) y escribe tu usuario y contraseña de MySQL. *Este archivo no se sube a GitHub.*
 3. **NetBeans:** `File → Open Project` → carpeta `Sistema`. Clic derecho → **Run** (GlassFish).
