@@ -17,7 +17,11 @@
     }
   },
   "postCreateCommand": "cd Sistema && mvn -q -DskipTests package",
-  "postAttachCommand": "bash .devcontainer/iniciar.sh",
+  // Arranca FinanZ en segundo plano cada vez que el Codespace se enciende,
+  // aunque no haya una ventana de VS Code abierta.
+  "postStartCommand": "setsid nohup bash .devcontainer/iniciar.sh > /tmp/finanz.log 2>&1 < /dev/null &",
+  // Al abrir VS Code se muestra el registro del servidor.
+  "postAttachCommand": "tail -n 30 -f /tmp/finanz.log",
   "customizations": {
     "codespaces": {
       "openFiles": ["README.md"]

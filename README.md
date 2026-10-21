@@ -20,7 +20,7 @@ aprender finanzas personales con lecciones y cuestionarios.
 3. Se abrirá la pestaña **FinanZ** (puerto 8080). Si no se abre, ve a la pestaña **Puertos** y abre el 8080.
 4. Inicia sesión con la cuenta
 
-> Para detener el servidor usa `Ctrl + C` en la terminal; para volver a iniciarlo: `bash .devcontainer/iniciar.sh`.
+> El servidor arranca solo cada vez que el Codespace se enciende (no hace falta tener VS Code abierto). Registro: `/tmp/finanz.log`. Si se detuviera, ejecútalo de nuevo con `bash .devcontainer/iniciar.sh`.
 
 ---
 
