@@ -1,0 +1,23 @@
+# Compilación de Maven / NetBeans
+Sistema/target/
+Sistema/nbproject/private/
+Sistema/nbactions*.xml
+*.class
+*.log
+
+# Credenciales locales (cada integrante crea el suyo a partir de db.properties.example)
+Sistema/src/main/resources/db.properties
+.env
+
+# Documentos y respaldos que no forman parte del código
+*.docx
+~$*
+Finanz.sql.sql
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json

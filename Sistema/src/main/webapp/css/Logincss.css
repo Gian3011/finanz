@@ -1,0 +1,221 @@
+:root {
+    --ink: #17221d;
+    --muted: #66736c;
+    --paper: #f5f7f3;
+    --surface: #ffffff;
+    --line: #dfe7df;
+    --forest: #176b4a;
+    --mint: #dff4e7;
+    --coral: #e4664d;
+    --sun: #e9b949;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "DM Sans", "Segoe UI", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    user-select: none;
+    cursor: default;
+}
+
+/* Los campos de texto sí deben poder seleccionarse y mostrar el cursor de escritura */
+input,
+textarea {
+    user-select: text;
+    cursor: text;
+}
+
+.login-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ===== PANEL IZQUIERDO ===== */
+
+.panel-izquierdo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 48px 32px;
+    background: linear-gradient(160deg, #123f78 0%, #0b2a52 100%);
+    color: white;
+    text-align: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 26px;
+    font-weight: 700;
+    font-family: "Fraunces", serif;
+}
+
+.logo-icono {
+    font-size: 28px;
+}
+
+.ilustracion {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 20px;
+}
+
+.gato-img {
+    max-width: 320px;
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.frase {
+    max-width: 360px;
+    font-size: 15px;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--mint);
+}
+
+/* ===== PANEL DERECHO ===== */
+
+.panel-derecho {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background: var(--surface);
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 360px;
+}
+
+.form-wrapper h1 {
+    font-family: "Fraunces", serif;
+    font-size: 28px;
+    margin-bottom: 24px;
+    text-align: center;
+    color: var(--ink);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.campo {
+    position: relative;
+}
+
+.campo input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--paper);
+    color: var(--ink);
+}
+
+.campo input:focus {
+    outline: none;
+    border-color: #123f78;
+    box-shadow: 0 0 0 3px rgba(18, 63, 120, 0.15);
+}
+
+.campo-password {
+    display: flex;
+    align-items: center;
+}
+
+.campo-password input {
+    padding-right: 40px;
+}
+
+.icono-ojo {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    user-select: none;
+    color: var(--muted);
+}
+
+.btn-login {
+    margin-top: 4px;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: #123f78;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.btn-login:hover {
+    background: #0b2a52;
+}
+
+.enlaces {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.link-recordar {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    margin-bottom: 12px;
+}
+
+.link-recordar:hover {
+    color: #123f78;
+}
+
+.link-registro {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+}
+
+.link-registro a {
+    color: #123f78;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.link-registro a:hover {
+    text-decoration: underline;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 860px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .panel-izquierdo {
+        padding: 32px 24px;
+    }
+
+    .gato-img {
+        max-width: 220px;
+    }
+}
