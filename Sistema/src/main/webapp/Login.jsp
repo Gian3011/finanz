@@ -46,6 +46,8 @@
 
                     <% if (request.getAttribute("error") != null) { %>
                     <p class="mensaje-error" role="alert"><%= Html.esc(request.getAttribute("error")) %></p>
+                    <% } else if ("cerrada".equals(request.getParameter("sesion"))) { %>
+                    <p class="mensaje-error" role="alert">Tu sesión se cerró o expiró. Vuelve a iniciar sesión.</p>
                     <% } %>
 
                     <form action="login" method="post" class="login-form">

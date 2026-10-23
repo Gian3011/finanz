@@ -10,6 +10,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<%= csrf %>">
+    <meta name="usuario-id" content="<%= Html.esc(session.getAttribute("idUsuario")) %>">
     <title>FinanZ · Tu espacio financiero</title>
     <link rel="icon" href="image/gatito_finanz.png">
 
@@ -22,7 +23,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
 
-    <link href="css/estilos.css?v=2" rel="stylesheet" type="text/css"/>
+    <link href="css/estilos.css?v=3" rel="stylesheet" type="text/css"/>
 </head>
 <body class="app-shell">
 
@@ -129,6 +130,6 @@
     <!-- Notificación flotante -->
     <div id="toast" class="toast" role="status"></div>
 
-    <script src="js/app.js?v=2"></script>
+    <script src="js/app.js?v=3"></script>
 </body>
 </html>

@@ -64,6 +64,10 @@ public class SeguridadFiltro extends HttpFilter {
             return;
         }
 
+        // Indica a la página qué usuario tiene la sesión: si en el mismo navegador se
+        // inició sesión con otra cuenta (otra pestaña), app.js lo detecta y avisa.
+        response.setHeader("X-FinanZ-Usuario", String.valueOf(session.getAttribute(ATRIBUTO_USUARIO)));
+
         if ("POST".equalsIgnoreCase(request.getMethod()) && !tokenCsrfValido(request, session)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token de seguridad inválido. Recarga la página.");
             return;

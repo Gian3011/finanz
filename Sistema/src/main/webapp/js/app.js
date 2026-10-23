@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var contenido = document.getElementById('contenido');
     var encabezado = document.getElementById('page-heading');
     var csrf = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+    var usuarioPagina = (document.querySelector('meta[name="usuario-id"]') || {}).content || '';
     var graficos = [];
     var SECCION_INICIAL = 'resumen';
 
@@ -50,8 +51,24 @@ document.addEventListener('DOMContentLoaded', function () {
         opciones.credentials = 'same-origin';
         return fetch(url, opciones).then(function (r) {
             if (r.status === 401) {
-                window.location.href = 'Login.jsp';
+                window.location.href = 'Login.jsp?sesion=cerrada';
                 throw new Error('Sesión expirada');
+            }
+            // Un navegador guarda una sola sesión por sitio: si en otra pestaña se
+            // inició sesión con otra cuenta, esta pestaña ya no es de su usuario.
+            var usuarioServidor = r.headers.get('X-FinanZ-Usuario');
+            if (usuarioPagina && usuarioServidor && usuarioServidor !== usuarioPagina) {
+                window.alert('Se inició sesión con otra cuenta en este navegador (en otra pestaña).\n\n'
+                    + 'La página se recargará con esa cuenta. Para usar dos cuentas a la vez, '
+                    + 'abre la otra en otro navegador o en una ventana de incógnito.');
+                window.location.reload();
+                throw new Error('Cambio de usuario');
+            }
+            if (r.status === 403) {
+                // El token de seguridad cambió (la sesión se renovó en otra pestaña)
+                window.alert('Tu sesión se renovó en otra pestaña. La página se recargará.');
+                window.location.reload();
+                throw new Error('Sesión renovada');
             }
             return r.text().then(function (texto) {
                 return { ok: r.ok, status: r.status, texto: texto };
