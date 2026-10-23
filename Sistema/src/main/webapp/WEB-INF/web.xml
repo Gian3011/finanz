@@ -14,6 +14,10 @@
         <!-- La sesión expira tras 30 minutos de inactividad -->
         <session-timeout>30</session-timeout>
         <cookie-config>
+            <!-- Nombre y ruta propios: evita choques con cookies de sesión de otras
+                 aplicaciones o de versiones anteriores (error "Duplicate valid session cookies") -->
+            <name>FINANZ_SESION</name>
+            <path>/</path>
             <!-- JavaScript no puede leer la cookie de sesión -->
             <http-only>true</http-only>
         </cookie-config>
