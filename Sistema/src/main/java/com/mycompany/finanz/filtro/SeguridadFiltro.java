@@ -1,5 +1,6 @@
 package com.mycompany.finanz.filtro;
 
+import com.mycompany.finanz.util.Redireccion;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebFilter;
@@ -59,7 +60,7 @@ public class SeguridadFiltro extends HttpFilter {
             if (ajax) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             } else {
-                response.sendRedirect(request.getContextPath() + "/Login.jsp");
+                Redireccion.a(response, request.getContextPath() + "/Login.jsp");
             }
             return;
         }

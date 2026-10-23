@@ -5,7 +5,7 @@
     // Si ya hay una sesión activa, no tiene sentido volver a iniciar sesión
     jakarta.servlet.http.HttpSession sesion = request.getSession(false);
     if (sesion != null && sesion.getAttribute("idUsuario") != null) {
-        response.sendRedirect("dashboard.jsp");
+        com.mycompany.finanz.util.Redireccion.a(response, "dashboard.jsp");
         return;
     }
     String frase = FraseUtil.obtenerAleatoria();

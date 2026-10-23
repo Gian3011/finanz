@@ -1,5 +1,6 @@
 package com.mycompany.finanz.controlador;
 
+import com.mycompany.finanz.util.Redireccion;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -21,6 +22,6 @@ public class LogoutServlet extends HttpServlet {
         if (session != null) {
             session.invalidate();
         }
-        response.sendRedirect("Login.jsp");
+        Redireccion.a(response, "Login.jsp");
     }
 }

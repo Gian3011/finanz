@@ -4,5 +4,5 @@
     // session="false": no crea sesiones vacías para visitantes sin login.
     jakarta.servlet.http.HttpSession sesion = request.getSession(false);
     boolean logueado = sesion != null && sesion.getAttribute("idUsuario") != null;
-    response.sendRedirect(logueado ? "dashboard.jsp" : "Login.jsp");
+    com.mycompany.finanz.util.Redireccion.a(response, logueado ? "dashboard.jsp" : "Login.jsp");
 %>

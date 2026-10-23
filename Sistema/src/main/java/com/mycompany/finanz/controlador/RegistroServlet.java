@@ -1,5 +1,6 @@
 package com.mycompany.finanz.controlador;
 
+import com.mycompany.finanz.util.Redireccion;
 import com.mycompany.finanz.dao.UsuarioDAO;
 import com.mycompany.finanz.modelo.Usuario;
 import com.mycompany.finanz.servicio.UsuarioServicio;
@@ -42,7 +43,7 @@ public class RegistroServlet extends HttpServlet {
 
             // Cuenta creada: inicia sesión directamente
             LoginServlet.iniciarSesion(request, usuario);
-            response.sendRedirect("dashboard.jsp");
+            Redireccion.a(response, "dashboard.jsp");
             return;
 
         } catch (ValidacionException e) {

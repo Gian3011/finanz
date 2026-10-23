@@ -1,5 +1,6 @@
 package com.mycompany.finanz.controlador;
 
+import com.mycompany.finanz.util.Redireccion;
 import com.mycompany.finanz.dao.UsuarioDAO;
 import com.mycompany.finanz.filtro.SeguridadFiltro;
 import com.mycompany.finanz.modelo.Usuario;
@@ -33,7 +34,7 @@ public class LoginServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Si alguien entra directo a /login por GET, lo mandamos al formulario
-        response.sendRedirect("Login.jsp");
+        Redireccion.a(response, "Login.jsp");
     }
 
     @Override
@@ -46,7 +47,7 @@ public class LoginServlet extends HttpServlet {
         try {
             Usuario usuario = loginServicio.login(correo, contrasena);
             iniciarSesion(request, usuario);
-            response.sendRedirect("dashboard.jsp");
+            Redireccion.a(response, "dashboard.jsp");
 
         } catch (CredencialesInvalidasException | CuentaBloqueadaException e) {
             volverAlLogin(request, response, e.getMessage(), correo);
