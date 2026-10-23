@@ -20,11 +20,21 @@ aprender finanzas personales con lecciones y cuestionarios.
 3. Se abrirá la pestaña **FinanZ** (puerto 8080). Si no se abre, ve a la pestaña **Puertos** y abre el 8080.
 4. Inicia sesión con la cuenta
 
-> El servidor arranca solo cada vez que el Codespace se enciende (no hace falta tener VS Code abierto). Registro: `/tmp/finanz.log`. Si se detuviera, ejecútalo de nuevo con `bash .devcontainer/iniciar.sh`.
+> Al abrir el Codespace, FinanZ se inicia en segundo plano y sigue corriendo aunque cierres VS Code (registro: `/tmp/finanz.log`). Si se detuviera, ejecuta en la terminal: `setsid nohup bash .devcontainer/iniciar.sh > /tmp/finanz.log 2>&1 < /dev/null &`
+
+### Compartir el sistema con varias personas
+
+El puerto público de Codespaces mezcla las sesiones cuando varias personas lo usan a la vez. Para compartir FinanZ, abre un túnel gratuito de Cloudflare (no requiere cuenta) desde la terminal del Codespace:
+
+```bash
+bash .devcontainer/tunel.sh
+```
+
+Muestra un enlace `https://….trycloudflare.com/Login.jsp` que puedes compartir: cada persona tiene su propia sesión. El enlace cambia cada vez que se ejecuta y solo funciona mientras el Codespace está encendido.
 
 ---
 
-> Al abrir el Codespace, FinanZ se inicia en segundo plano y sigue corriendo aunque cierres VS Code (registro: `/tmp/finanz.log`). Si se detuviera, ejecuta en la terminal: `setsid nohup bash .devcontainer/iniciar.sh > /tmp/finanz.log 2>&1 < /dev/null &`
+## ✅ Requerimientos implementados
 
 ### Funcionales
 
