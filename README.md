@@ -30,7 +30,11 @@ El puerto público de Codespaces mezcla las sesiones cuando varias personas lo u
 bash .devcontainer/tunel.sh
 ```
 
-Muestra un enlace `https://….trycloudflare.com/Login.jsp` que puedes compartir: cada persona tiene su propia sesión. El enlace cambia cada vez que se ejecuta y solo funciona mientras el Codespace está encendido.
+El enlace de Cloudflare cambia cada vez, pero el script lo publica automáticamente, así que puedes compartir siempre el mismo **enlace fijo**:
+
+👉 **https://gian3011.github.io/finanz/app/**
+
+Redirige al túnel vigente (cada persona mantiene su propia sesión) o avisa que el sistema está apagado. Antes de apagar el Codespace ejecuta `bash .devcontainer/tunel.sh --apagar`.
 
 ---
 

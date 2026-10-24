@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanZ · Abriendo el sistema</title>
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="../img/gatito_finanz.png">
+    <style>
+        :root { --ink: #17221d; --muted: #5f6d66; --paper: #f5f7f3; --azul: #123f78; --azul-2: #0b2a52; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 24px; font-family: "Segoe UI", system-ui, sans-serif; color: #fff;
+            background: linear-gradient(160deg, var(--azul) 0%, var(--azul-2) 100%);
+        }
+        .caja { max-width: 440px; text-align: center; }
+        img { width: 110px; height: auto; }
+        h1 { margin: 16px 0 8px; font-size: 26px; }
+        p { margin: 0 0 12px; color: #dbe7ff; line-height: 1.5; }
+        a { color: #8de0ae; font-weight: 700; }
+        .spinner {
+            width: 34px; height: 34px; margin: 18px auto 0; border-radius: 50%;
+            border: 4px solid rgba(255,255,255,.25); border-top-color: #8de0ae; animation: giro 1s linear infinite;
+        }
+        @keyframes giro { to { transform: rotate(360deg); } }
+        .oculto { display: none; }
+    </style>
+</head>
+<body>
+    <main class="caja">
+        <img src="../img/gatito_finanz.png" alt="Gato mascota de FinanZ">
+        <div id="cargando">
+            <h1>Abriendo FinanZ…</h1>
+            <p>Te estamos llevando al sistema.</p>
+            <div class="spinner" aria-hidden="true"></div>
+        </div>
+        <div id="apagado" class="oculto">
+            <h1>El sistema está apagado</h1>
+            <p>FinanZ se enciende solo durante las pruebas y presentaciones. Inténtalo más tarde o avisa al equipo.</p>
+            <p><a href="../">Ver la página del proyecto</a></p>
+        </div>
+    </main>
+
+    <script>
+        // destino.txt contiene el enlace del túnel vigente (lo actualiza .devcontainer/tunel.sh)
+        // o la palabra "apagado". Se evita la caché para leer siempre el valor actual.
+        fetch('destino.txt?t=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) { return r.text(); })
+            .then(function (texto) {
+                var destino = texto.trim();
+                if (/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(destino)) {
+                    window.location.replace(destino + '/Login.jsp');
+                } else {
+                    throw new Error('apagado');
+                }
+            })
+            .catch(function () {
+                document.getElementById('cargando').classList.add('oculto');
+                document.getElementById('apagado').classList.remove('oculto');
+            });
+    </script>
+</body>
+</html>
