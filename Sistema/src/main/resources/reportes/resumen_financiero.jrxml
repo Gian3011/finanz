@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Resumen financiero mensual de FinanZ (JasperReports 6.21, compatible con Jaspersoft Studio 6.x).
+  Se llena desde ReporteServicio con parámetros y fuentes de datos (JRMapCollectionDataSource)
+  y se exporta a PDF, Excel (XLSX) o Word (DOCX) en ReporteJasper.
+-->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="resumen_financiero" pageWidth="595" pageHeight="842" columnWidth="535"
+              leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30"
+              whenNoDataType="AllSectionsNoDetail">
+    <!-- En Excel el reporte se llena sin paginación (ReporteJasper): una sola hoja continua -->
+    <property name="net.sf.jasperreports.export.xls.sheet.names.all" value="Resumen"/>
+
+    <style name="Base" isDefault="true" fontName="DejaVu Sans" fontSize="9" forecolor="#17221D"/>
+    <style name="Seccion" fontName="DejaVu Sans" fontSize="12" isBold="true" forecolor="#123F78"/>
+    <style name="Cabecera" mode="Opaque" backcolor="#123F78" forecolor="#FFFFFF" fontName="DejaVu Sans" fontSize="8.5" isBold="true">
+        <box topPadding="3" leftPadding="5" bottomPadding="3" rightPadding="5">
+            <pen lineWidth="0.5" lineColor="#123F78"/>
+        </box>
+    </style>
+    <style name="Celda" fontName="DejaVu Sans" fontSize="8.5">
+        <box topPadding="3" leftPadding="5" bottomPadding="3" rightPadding="5">
+            <bottomPen lineWidth="0.5" lineColor="#DCE2E8"/>
+        </box>
+    </style>
+    <style name="Kpi" mode="Opaque" backcolor="#F1F5FA"/>
+
+    <subDataset name="categorias">
+        <field name="categoria" class="java.lang.String"/>
+        <field name="monto" class="java.lang.String"/>
+        <field name="porcentaje" class="java.lang.String"/>
+    </subDataset>
+    <subDataset name="comparacion">
+        <parameter name="MES" class="java.lang.String"/>
+        <parameter name="MES_ANTERIOR" class="java.lang.String"/>
+        <field name="concepto" class="java.lang.String"/>
+        <field name="anterior" class="java.lang.String"/>
+        <field name="actual" class="java.lang.String"/>
+        <field name="variacion" class="java.lang.String"/>
+    </subDataset>
+    <subDataset name="metas">
+        <field name="meta" class="java.lang.String"/>
+        <field name="ahorrado" class="java.lang.String"/>
+        <field name="objetivo" class="java.lang.String"/>
+        <field name="progreso" class="java.lang.String"/>
+        <field name="fecha" class="java.lang.String"/>
+    </subDataset>
+    <subDataset name="recomendaciones">
+        <field name="titulo" class="java.lang.String"/>
+        <field name="descripcion" class="java.lang.String"/>
+    </subDataset>
+    <subDataset name="movimientos">
+        <field name="fecha" class="java.lang.String"/>
+        <field name="descripcion" class="java.lang.String"/>
+        <field name="categoria" class="java.lang.String"/>
+        <field name="monto" class="java.lang.String"/>
+    </subDataset>
+
+    <parameter name="MES" class="java.lang.String"/>
+    <parameter name="MES_ANTERIOR" class="java.lang.String"/>
+    <parameter name="USUARIO" class="java.lang.String"/>
+    <parameter name="GENERADO" class="java.lang.String"/>
+    <parameter name="INGRESOS" class="java.lang.String"/>
+    <parameter name="GASTOS" class="java.lang.String"/>
+    <parameter name="BALANCE" class="java.lang.String"/>
+    <parameter name="BALANCE_NEGATIVO" class="java.lang.Boolean"/>
+    <parameter name="AHORRO_METAS" class="java.lang.String"/>
+    <parameter name="PRESUPUESTO" class="java.lang.String"/>
+    <parameter name="GASTOS_HORMIGA" class="java.lang.String"/>
+    <parameter name="TOTAL_MOVIMIENTOS" class="java.lang.Integer"/>
+    <parameter name="DS_CATEGORIAS" class="net.sf.jasperreports.engine.JRDataSource"/>
+    <parameter name="DS_COMPARACION" class="net.sf.jasperreports.engine.JRDataSource"/>
+    <parameter name="DS_METAS" class="net.sf.jasperreports.engine.JRDataSource"/>
+    <parameter name="DS_RECOMENDACIONES" class="net.sf.jasperreports.engine.JRDataSource"/>
+    <parameter name="DS_MOVIMIENTOS" class="net.sf.jasperreports.engine.JRDataSource"/>
+
+    <title>
+        <band height="118" splitType="Stretch">
+            <image scaleImage="RetainShape" hAlign="Center" vAlign="Middle">
+                <reportElement x="0" y="0" width="48" height="48"/>
+                <imageExpression><![CDATA["reportes/logo.png"]]></imageExpression>
+            </image>
+            <staticText>
+                <reportElement x="58" y="0" width="477" height="14" forecolor="#176B4A"/>
+                <textElement><font size="11" isBold="true"/></textElement>
+                <text><![CDATA[FinanZ]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="58" y="14" width="477" height="24" forecolor="#123F78"/>
+                <textElement><font size="17" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA["Resumen financiero de " + $P{MES}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="58" y="38" width="477" height="12" forecolor="#66736C"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$P{USUARIO} + "  ·  Generado el " + $P{GENERADO}]]></textFieldExpression>
+            </textField>
+
+            <frame>
+                <reportElement style="Kpi" x="0" y="64" width="128" height="46"/>
+                <staticText>
+                    <reportElement x="8" y="5" width="112" height="12" forecolor="#66736C"/>
+                    <textElement><font size="8"/></textElement>
+                    <text><![CDATA[Ingresos]]></text>
+                </staticText>
+                <textField isBlankWhenNull="true">
+                    <reportElement x="8" y="19" width="112" height="20" forecolor="#176B4A"/>
+                    <textElement><font size="12" isBold="true"/></textElement>
+                    <textFieldExpression><![CDATA[$P{INGRESOS}]]></textFieldExpression>
+                </textField>
+            </frame>
+            <frame>
+                <reportElement style="Kpi" x="135" y="64" width="128" height="46"/>
+                <staticText>
+                    <reportElement x="8" y="5" width="112" height="12" forecolor="#66736C"/>
+                    <textElement><font size="8"/></textElement>
+                    <text><![CDATA[Gastos]]></text>
+                </staticText>
+                <textField isBlankWhenNull="true">
+                    <reportElement x="8" y="19" width="112" height="20" forecolor="#E4664D"/>
+                    <textElement><font size="12" isBold="true"/></textElement>
+                    <textFieldExpression><![CDATA[$P{GASTOS}]]></textFieldExpression>
+                </textField>
+            </frame>
+            <frame>
+                <reportElement style="Kpi" x="270" y="64" width="128" height="46"/>
+                <staticText>
+                    <reportElement x="8" y="5" width="112" height="12" forecolor="#66736C"/>
+                    <textElement><font size="8"/></textElement>
+                    <text><![CDATA[Balance]]></text>
+                </staticText>
+                <textField isBlankWhenNull="true">
+                    <reportElement x="8" y="19" width="112" height="20" forecolor="#123F78">
+                        <printWhenExpression><![CDATA[!Boolean.TRUE.equals($P{BALANCE_NEGATIVO})]]></printWhenExpression>
+                    </reportElement>
+                    <textElement><font size="12" isBold="true"/></textElement>
+                    <textFieldExpression><![CDATA[$P{BALANCE}]]></textFieldExpression>
+                </textField>
+                <textField isBlankWhenNull="true">
+                    <reportElement x="8" y="19" width="112" height="20" forecolor="#E4664D">
+                        <printWhenExpression><![CDATA[Boolean.TRUE.equals($P{BALANCE_NEGATIVO})]]></printWhenExpression>
+                    </reportElement>
+                    <textElement><font size="12" isBold="true"/></textElement>
+                    <textFieldExpression><![CDATA[$P{BALANCE}]]></textFieldExpression>
+                </textField>
+            </frame>
+            <frame>
+                <reportElement style="Kpi" x="405" y="64" width="130" height="46"/>
+                <staticText>
+                    <reportElement x="8" y="5" width="114" height="12" forecolor="#66736C"/>
+                    <textElement><font size="8"/></textElement>
+                    <text><![CDATA[Ahorro en metas]]></text>
+                </staticText>
+                <textField isBlankWhenNull="true">
+                    <reportElement x="8" y="19" width="114" height="20" forecolor="#123F78"/>
+                    <textElement><font size="12" isBold="true"/></textElement>
+                    <textFieldExpression><![CDATA[$P{AHORRO_METAS}]]></textFieldExpression>
+                </textField>
+            </frame>
+        </band>
+    </title>
+
+    <detail>
+        <band height="392" splitType="Stretch">
+            <!-- Presupuesto -->
+            <staticText>
+                <reportElement style="Seccion" positionType="Float" x="0" y="4" width="535" height="18"/>
+                <text><![CDATA[Presupuesto]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement positionType="Float" x="0" y="22" width="535" height="14"/>
+                <textFieldExpression><![CDATA[$P{PRESUPUESTO}]]></textFieldExpression>
+            </textField>
+
+            <!-- Gastos por categoría -->
+            <staticText>
+                <reportElement style="Seccion" positionType="Float" x="0" y="44" width="535" height="18"/>
+                <text><![CDATA[Gastos por categoría]]></text>
+            </staticText>
+            <componentElement>
+                <reportElement positionType="Float" x="0" y="64" width="535" height="34"/>
+                <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components"
+                          xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+                    <datasetRun subDataset="categorias">
+                        <dataSourceExpression><![CDATA[$P{DS_CATEGORIAS}]]></dataSourceExpression>
+                    </datasetRun>
+                    <jr:column width="315">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="315" height="18"/>
+                                <text><![CDATA[Categoría]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="315" height="16"/>
+                                <textFieldExpression><![CDATA[$F{categoria}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="130">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="130" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <text><![CDATA[Monto]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="130" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{monto}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="90">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="90" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <text><![CDATA[% del total]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="90" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{porcentaje}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                </jr:table>
+            </componentElement>
+            <textField isBlankWhenNull="true">
+                <reportElement positionType="Float" x="0" y="102" width="535" height="14"/>
+                <textElement><font isBold="true"/></textElement>
+                <textFieldExpression><![CDATA["Gastos hormiga del mes: " + $P{GASTOS_HORMIGA}]]></textFieldExpression>
+            </textField>
+
+            <!-- Comparación con el mes anterior -->
+            <textField isBlankWhenNull="true">
+                <reportElement style="Seccion" positionType="Float" x="0" y="124" width="535" height="18"/>
+                <textFieldExpression><![CDATA["Comparación con " + $P{MES_ANTERIOR}]]></textFieldExpression>
+            </textField>
+            <componentElement>
+                <reportElement positionType="Float" x="0" y="144" width="535" height="34"/>
+                <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components"
+                          xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+                    <datasetRun subDataset="comparacion">
+                        <datasetParameter name="MES">
+                            <datasetParameterExpression><![CDATA[$P{MES}]]></datasetParameterExpression>
+                        </datasetParameter>
+                        <datasetParameter name="MES_ANTERIOR">
+                            <datasetParameterExpression><![CDATA[$P{MES_ANTERIOR}]]></datasetParameterExpression>
+                        </datasetParameter>
+                        <dataSourceExpression><![CDATA[$P{DS_COMPARACION}]]></dataSourceExpression>
+                    </datasetRun>
+                    <jr:column width="175">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="175" height="18"/>
+                                <text><![CDATA[Concepto]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="175" height="16"/>
+                                <textFieldExpression><![CDATA[$F{concepto}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="130">
+                        <jr:columnHeader height="18">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Cabecera" x="0" y="0" width="130" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$P{MES_ANTERIOR}]]></textFieldExpression>
+                            </textField>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="130" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{anterior}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="130">
+                        <jr:columnHeader height="18">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Cabecera" x="0" y="0" width="130" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$P{MES}]]></textFieldExpression>
+                            </textField>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="130" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{actual}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="100">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="100" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <text><![CDATA[Variación]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="100" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{variacion}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                </jr:table>
+            </componentElement>
+
+            <!-- Metas de ahorro -->
+            <staticText>
+                <reportElement style="Seccion" positionType="Float" x="0" y="186" width="535" height="18"/>
+                <text><![CDATA[Metas de ahorro]]></text>
+            </staticText>
+            <componentElement>
+                <reportElement positionType="Float" x="0" y="206" width="535" height="34"/>
+                <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components"
+                          xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+                    <datasetRun subDataset="metas">
+                        <dataSourceExpression><![CDATA[$P{DS_METAS}]]></dataSourceExpression>
+                    </datasetRun>
+                    <jr:column width="175">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="175" height="18"/>
+                                <text><![CDATA[Meta]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="175" height="16"/>
+                                <textFieldExpression><![CDATA[$F{meta}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="95">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="95" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <text><![CDATA[Ahorrado]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="95" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{ahorrado}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="95">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="95" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <text><![CDATA[Objetivo]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="95" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{objetivo}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="75">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="75" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <text><![CDATA[Progreso]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="75" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{progreso}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="95">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="95" height="18"/>
+                                <textElement textAlignment="Center"/>
+                                <text><![CDATA[Fecha objetivo]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" x="0" y="0" width="95" height="16"/>
+                                <textElement textAlignment="Center"/>
+                                <textFieldExpression><![CDATA[$F{fecha}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                </jr:table>
+            </componentElement>
+
+            <!-- Recomendaciones -->
+            <staticText>
+                <reportElement style="Seccion" positionType="Float" x="0" y="248" width="535" height="18"/>
+                <text><![CDATA[Recomendaciones]]></text>
+            </staticText>
+            <componentElement>
+                <reportElement positionType="Float" x="0" y="268" width="535" height="34"/>
+                <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components"
+                          xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+                    <datasetRun subDataset="recomendaciones">
+                        <dataSourceExpression><![CDATA[$P{DS_RECOMENDACIONES}]]></dataSourceExpression>
+                    </datasetRun>
+                    <jr:column width="160">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="160" height="18"/>
+                                <text><![CDATA[Recomendación]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                                <reportElement style="Celda" stretchType="ContainerHeight" x="0" y="0" width="160" height="16"/>
+                                <textElement><font isBold="true"/></textElement>
+                                <textFieldExpression><![CDATA[$F{titulo}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="375">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="375" height="18"/>
+                                <text><![CDATA[Detalle]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                                <reportElement style="Celda" stretchType="ContainerHeight" x="0" y="0" width="375" height="16"/>
+                                <textFieldExpression><![CDATA[$F{descripcion}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                </jr:table>
+            </componentElement>
+
+            <!-- Movimientos del mes -->
+            <textField isBlankWhenNull="true">
+                <reportElement style="Seccion" positionType="Float" x="0" y="310" width="535" height="18"/>
+                <textFieldExpression><![CDATA["Movimientos del mes (" + $P{TOTAL_MOVIMIENTOS} + ")"]]></textFieldExpression>
+            </textField>
+            <componentElement>
+                <reportElement positionType="Float" x="0" y="330" width="535" height="34"/>
+                <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components"
+                          xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+                    <datasetRun subDataset="movimientos">
+                        <dataSourceExpression><![CDATA[$P{DS_MOVIMIENTOS}]]></dataSourceExpression>
+                    </datasetRun>
+                    <jr:column width="75">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="75" height="18"/>
+                                <textElement textAlignment="Center"/>
+                                <text><![CDATA[Fecha]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" stretchType="ContainerHeight" x="0" y="0" width="75" height="16"/>
+                                <textElement textAlignment="Center"/>
+                                <textFieldExpression><![CDATA[$F{fecha}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="230">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="230" height="18"/>
+                                <text><![CDATA[Descripción]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                                <reportElement style="Celda" stretchType="ContainerHeight" x="0" y="0" width="230" height="16"/>
+                                <textFieldExpression><![CDATA[$F{descripcion}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="130">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="130" height="18"/>
+                                <text><![CDATA[Categoría]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                                <reportElement style="Celda" stretchType="ContainerHeight" x="0" y="0" width="130" height="16"/>
+                                <textFieldExpression><![CDATA[$F{categoria}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="100">
+                        <jr:columnHeader height="18">
+                            <staticText>
+                                <reportElement style="Cabecera" x="0" y="0" width="100" height="18"/>
+                                <textElement textAlignment="Right"/>
+                                <text><![CDATA[Monto]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:detailCell height="16">
+                            <textField isBlankWhenNull="true">
+                                <reportElement style="Celda" stretchType="ContainerHeight" x="0" y="0" width="100" height="16"/>
+                                <textElement textAlignment="Right"/>
+                                <textFieldExpression><![CDATA[$F{monto}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                </jr:table>
+            </componentElement>
+
+            <staticText>
+                <reportElement positionType="Float" x="0" y="372" width="535" height="20" forecolor="#66736C"/>
+                <textElement><font size="7.5"/></textElement>
+                <text><![CDATA[Documento generado automáticamente por FinanZ – Plataforma Web de Educación y Gestión Financiera Personal. La información depende de los datos registrados por el usuario.]]></text>
+            </staticText>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="16">
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="2" width="400" height="12" forecolor="#66736C"/>
+                <textElement><font size="7.5"/></textElement>
+                <textFieldExpression><![CDATA["FinanZ · Resumen financiero de " + $P{MES}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="400" y="2" width="100" height="12" forecolor="#66736C"/>
+                <textElement textAlignment="Right"><font size="7.5"/></textElement>
+                <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER} + " de"]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report" isBlankWhenNull="true">
+                <reportElement x="500" y="2" width="35" height="12" forecolor="#66736C"/>
+                <textElement><font size="7.5"/></textElement>
+                <textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

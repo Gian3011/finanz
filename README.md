@@ -6,7 +6,7 @@
 Proyecto del curso **Integrador I: Sistemas Software** – Universidad Tecnológica del Perú (2026).
 
 FinanZ permite registrar ingresos y gastos, planificar presupuestos con alertas, crear metas de ahorro,
-detectar gastos hormiga, simular escenarios de ahorro, comparar periodos, exportar reportes en PDF y
+detectar gastos hormiga, simular escenarios de ahorro, comparar periodos, exportar reportes en PDF, Excel y Word (JasperReports) y
 aprender finanzas personales con lecciones y cuestionarios.
 
 🌐 **Página del proyecto:** https://gian3011.github.io/finanz/
@@ -59,7 +59,7 @@ Redirige al túnel vigente (cada persona mantiene su propia sesión) o avisa que
 | RF13 | Identificar y clasificar gastos hormiga (automático + manual) | Transacciones / Análisis |
 | RF14 | Estadísticas y gráficos de hábitos de gasto | Resumen / Análisis |
 | RF15 | Comparar ingresos, gastos y ahorro entre periodos | Análisis |
-| RF16 | Exportar el resumen financiero en PDF | Reportes |
+| RF16 | Exportar el resumen financiero en PDF, Excel o Word (JasperReports) | Reportes |
 | RF17 | Recomendaciones personalizadas | Resumen / Análisis |
 | RF18 | Contenido educativo | Educación |
 | RF19 | Cuestionarios con resultados (nota 0–20) | Educación |
@@ -85,7 +85,7 @@ Navegador (HTML5 + CSS3 + JavaScript, Chart.js)
         ▼
 Controladores (Servlets)  ── SeguridadFiltro (sesión, CSRF, UTF-8)
         │
-Servicios (reglas de negocio: presupuesto, gasto hormiga, metas, simulador, recomendaciones, PDF)
+Servicios (reglas de negocio: presupuesto, gasto hormiga, metas, simulador, recomendaciones, reportes con JasperReports)
         │
 DAO (JDBC + PreparedStatement)  ── ConexionDB (Singleton + pool HikariCP)
         │
@@ -99,7 +99,7 @@ Sistema/src/main/java/com/mycompany/finanz/
 ├── dao/           Acceso a datos
 ├── modelo/        Entidades (Movimiento → Ingreso / Gasto, Presupuesto, MetaAhorro, ...)
 ├── filtro/        Seguridad y ciclo de vida de la aplicación
-└── util/          Hash de contraseñas, formato, escape HTML, JSON
+└── util/          Hash de contraseñas, formato, escape HTML, JSON y ReporteJasper (PDF/Excel/Word)
 Sistema/src/main/webapp/
 ├── Login.jsp, dashboard.jsp
 ├── WEB-INF/vistas/   Fragmentos JSP de cada sección (no accesibles directamente)
