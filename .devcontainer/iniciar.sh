@@ -9,6 +9,14 @@ if curl -s -o /dev/null http://localhost:8080/Login.jsp; then
   exit 0
 fi
 
+# JasperReports necesita las librerías de fuentes del sistema (libfreetype y fontconfig)
+# para medir el texto de los reportes; la imagen base del Codespace no las trae.
+if ! ldconfig -p | grep -q libfreetype.so.6 || ! command -v fc-list >/dev/null; then
+  echo "🔤 Instalando librerías de fuentes para los reportes (libfreetype6, fontconfig)..."
+  sudo rm -f /etc/apt/sources.list.d/yarn.list
+  sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libfreetype6 fontconfig > /dev/null
+fi
+
 echo "⏳ Esperando a que MySQL esté listo..."
 for i in $(seq 1 90); do
   if (exec 3<>/dev/tcp/db/3306) 2>/dev/null; then
