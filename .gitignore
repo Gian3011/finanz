@@ -7,6 +7,7 @@ Sistema/nbactions*.xml
 
 # Credenciales locales (cada integrante crea el suyo a partir de db.properties.example)
 Sistema/src/main/resources/db.properties
+Sistema/src/main/resources/mail.properties
 .env
 
 # Documentos y respaldos que no forman parte del código

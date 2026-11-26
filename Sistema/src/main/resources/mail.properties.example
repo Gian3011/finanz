@@ -1,0 +1,19 @@
+# Configuración del envío de reportes por correo (SMTP) y de la verificación de entrega (POP3).
+#
+# 1. Copia este archivo como "mail.properties" (en esta misma carpeta).
+#    mail.properties NO se sube a GitHub (está en .gitignore).
+# 2. En mail.clave escribe la CONTRASEÑA DE APLICACIÓN de Gmail (16 letras, sin espacios ni < >),
+#    no la contraseña normal de la cuenta. Se crea en https://myaccount.google.com/apppasswords
+#    (requiere la verificación en dos pasos activa).
+# 3. Para verificar rebotes con POP3, en Gmail activa:
+#    Configuración -> Reenvío y correo POP/IMAP -> Habilitar POP para todos los mensajes.
+#
+# Las variables de entorno FINANZ_MAIL_* tienen prioridad sobre este archivo
+# (en GitHub Codespaces se usan los secretos FINANZ_MAIL_USUARIO y FINANZ_MAIL_CLAVE).
+mail.usuario=finanzutp@gmail.com
+mail.clave=TU_CONTRASEÑA_DE_APLICACION
+mail.remitente=FinanZ <finanzutp@gmail.com>
+mail.smtp.host=smtp.gmail.com
+mail.smtp.port=587
+mail.pop3.host=pop.gmail.com
+mail.pop3.port=995

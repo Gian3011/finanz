@@ -130,6 +130,6 @@
     <!-- Notificación flotante -->
     <div id="toast" class="toast" role="status"></div>
 
-    <script src="js/app.js?v=3"></script>
+    <script src="js/app.js?v=4"></script>
 </body>
 </html>

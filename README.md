@@ -64,6 +64,7 @@ Redirige al túnel vigente (cada persona mantiene su propia sesión) o avisa que
 | RF18 | Contenido educativo | Educación |
 | RF19 | Cuestionarios con resultados (nota 0–20) | Educación |
 | RF20 | Simular escenarios de ahorro | Simulador |
+| RF21 | Enviar el reporte por correo (SMTP) y verificar entrega (POP3) | Reportes → Enviar por correo |
 
 ### No funcionales
 
@@ -72,7 +73,7 @@ Redirige al túnel vigente (cada persona mantiene su propia sesión) o avisa que
 | **Rendimiento** (100–200 usuarios simultáneos) | Pool de conexiones HikariCP (`ConexionDB`), servlets sin estado, índices en la BD, caché de sentencias preparadas. |
 | **Velocidad** (< 2 s) | Secciones cargadas por AJAX (solo el fragmento HTML), consultas agregadas en SQL, caché de recursos estáticos. |
 | **Disponibilidad** (99 %) | Aplicación sin estado compartido en memoria, lista para desplegarse en GlassFish/Jetty con reinicio automático; el pool se reconecta si la BD se reinicia. |
-| **Seguridad** | Contraseñas con PBKDF2-HMAC-SHA256 + sal, bloqueo temporal tras 3 intentos, filtro de sesión, token CSRF, escape de HTML (XSS), `PreparedStatement` (inyección SQL), verificación de que cada registro pertenece al usuario, cookie `HttpOnly`. |
+| **Seguridad** | Contraseñas con PBKDF2-HMAC-SHA256 + sal, bloqueo temporal tras 3 intentos, filtro de sesión, token CSRF, escape de HTML (XSS), `PreparedStatement` (inyección SQL), verificación de que cada registro pertenece al usuario, cookie `HttpOnly`. Correo: credenciales fuera del código (variables de entorno o `mail.properties`), máximo 5 envíos por hora y correo destino oculto en los registros. |
 | **Diseño responsivo** | Tailwind CSS + CSS propio: menú lateral desplegable en celulares, grillas adaptables, modo oscuro. |
 
 ---
@@ -105,6 +106,7 @@ Sistema/src/main/webapp/
 ├── WEB-INF/vistas/   Fragmentos JSP de cada sección (no accesibles directamente)
 ├── css/, js/, image/
 db/db_finanz.sql      Script de la base de datos con datos de demostración
+db/migracion_correo.sql  Crea la tabla envio_reporte en bases ya existentes (RF21)
 ```
 
 ---
@@ -114,7 +116,8 @@ db/db_finanz.sql      Script de la base de datos con datos de demostración
 **Requisitos:** JDK 17, Apache NetBeans 19, MySQL Server 8.0, GlassFish 6.2.5.
 
 1. **Base de datos:** abre `db/db_finanz.sql` en MySQL Workbench y ejecútalo completo (⚡).
-   Crea la base `db_finanz` con 18 tablas y datos de demostración.
+   Crea la base `db_finanz` con 19 tablas y datos de demostración.
+   Si tu base ya existía, ejecuta además `db/migracion_correo.sql` (agrega la tabla `envio_reporte` sin borrar datos).
 2. **Credenciales:** copia `Sistema/src/main/resources/db.properties.example` como `db.properties`
    (misma carpeta) y escribe tu usuario y contraseña de MySQL. *Este archivo no se sube a GitHub.*
 3. **NetBeans:** `File → Open Project` → carpeta `Sistema`. Clic derecho → **Run** (GlassFish).
@@ -123,6 +126,30 @@ db/db_finanz.sql      Script de la base de datos con datos de demostración
 **Alternativa sin GlassFish:** dentro de `Sistema` ejecuta `mvn jetty:run` y abre `http://localhost:8080`.
 
 **Pruebas unitarias:** `mvn test` (dentro de `Sistema`).
+
+---
+
+## ✉️ Envío del reporte por correo (RF21)
+
+En **Reportes → Enviar por correo** se elige el mes, el formato (PDF, Excel o Word) y el correo destino
+(por defecto el de la cuenta, editable porque puede ser ficticio). FinanZ genera el reporte con JasperReports
+y lo envía por **SMTP** (STARTTLS, `smtp.gmail.com:587`) desde `finanzutp@gmail.com`. En **Envíos por correo**,
+**Verificar entrega** revisa por **POP3** (SSL, `pop.gmail.com:995`, solo lectura) si llegó un aviso de rebote.
+Cada usuario puede enviar como máximo **5 reportes por hora**.
+
+**Configuración local**
+
+1. Copia `Sistema/src/main/resources/mail.properties.example` como `mail.properties` (misma carpeta;
+   *no se sube a GitHub*).
+2. En `mail.clave` escribe la **contraseña de aplicación** de Gmail de `finanzutp@gmail.com` (16 letras, sin espacios).
+3. En Gmail de esa cuenta: *Configuración → Reenvío y correo POP/IMAP → Habilitar POP para todos los mensajes*.
+
+Si falta el usuario o la clave, el botón responde *“El envío por correo no está configurado”* y el resto del sistema sigue funcionando.
+
+**GitHub Codespaces:** en el repositorio, *Settings → Secrets and variables → Codespaces*, crea los secretos
+`FINANZ_MAIL_USUARIO` (`finanzutp@gmail.com`) y `FINANZ_MAIL_CLAVE` (la contraseña de aplicación). Llegan al
+contenedor como variables de entorno (ver `.devcontainer/docker-compose.yml`) y tienen prioridad sobre
+`mail.properties`. Al cambiar los secretos, reinicia el Codespace. `iniciar.sh` aplica `db/migracion_correo.sql` al arrancar.
 
 ---
 

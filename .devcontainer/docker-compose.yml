@@ -10,6 +10,10 @@ services:
       FINANZ_DB_URL: "jdbc:mysql://db:3306/db_finanz?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima&characterEncoding=UTF-8"
       FINANZ_DB_USER: root
       FINANZ_DB_PASSWORD: finanz
+      # Envío de reportes por correo: llegan de los secretos de Codespaces
+      # (Settings -> Secrets and variables -> Codespaces). Nunca escribir aquí los valores.
+      FINANZ_MAIL_USUARIO: ${FINANZ_MAIL_USUARIO:-}
+      FINANZ_MAIL_CLAVE: ${FINANZ_MAIL_CLAVE:-}
     depends_on:
       - db
 

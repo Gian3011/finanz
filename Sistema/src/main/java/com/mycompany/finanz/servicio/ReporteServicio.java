@@ -1,7 +1,9 @@
 package com.mycompany.finanz.servicio;
 
+import com.mycompany.finanz.dao.EnvioReporteDAO;
 import com.mycompany.finanz.dao.MovimientoDAO;
 import com.mycompany.finanz.dao.ReporteRecomendacionDAO;
+import com.mycompany.finanz.modelo.EnvioReporte;
 import com.mycompany.finanz.modelo.FormatoReporte;
 import com.mycompany.finanz.modelo.Gasto;
 import com.mycompany.finanz.modelo.MetaAhorro;
@@ -29,7 +31,8 @@ import java.util.Map;
 /**
  * Genera el resumen financiero mensual del usuario con JasperReports
  * (plantilla reportes/resumen_financiero.jrxml) en PDF, Excel o Word
- * y registra la generación en la tabla reporte_financiero.
+ * y registra la generación en la tabla reporte_financiero. También lo envía
+ * por correo (CorreoServicio) y registra cada envío en envio_reporte.
  */
 public class ReporteServicio {
 
@@ -39,8 +42,87 @@ public class ReporteServicio {
     private final RecomendacionServicio recomendacionServicio = new RecomendacionServicio();
     private final MovimientoDAO movimientoDAO = new MovimientoDAO();
     private final ReporteRecomendacionDAO reporteDAO = new ReporteRecomendacionDAO();
+    private final EnvioReporteDAO envioDAO = new EnvioReporteDAO();
+    private final CorreoServicio correoServicio = new CorreoServicio();
+
+    /** Máximo de reportes que un usuario puede enviar por correo en una hora. */
+    public static final int LIMITE_ENVIOS_POR_HORA = 5;
 
     public byte[] generar(Usuario usuario, YearMonth mes, FormatoReporte formato) throws SQLException {
+        byte[] archivo = armar(usuario, mes, formato);
+        reporteDAO.insertarReporte(new ReporteFinanciero(usuario.getIdUsuario(), mes.toString(), formato.getCodigo()));
+        return archivo;
+    }
+
+    public List<ReporteFinanciero> historial(int idUsuario) throws SQLException {
+        return reporteDAO.listarReportes(idUsuario, 10);
+    }
+
+    // ------------------------------------------------------------------
+    // Envío por correo (RF21)
+    // ------------------------------------------------------------------
+
+    public boolean correoConfigurado() {
+        return correoServicio.estaConfigurado();
+    }
+
+    /**
+     * Genera el resumen del mes y lo envía al correo destino. Registra el intento en
+     * envio_reporte (ENVIADO o ERROR) para el historial y el límite de envíos por hora.
+     */
+    public void enviarPorCorreo(Usuario usuario, YearMonth mes, FormatoReporte formato, String destino)
+            throws SQLException, ValidacionException {
+        if (!correoServicio.estaConfigurado()) {
+            throw new ValidacionException(CorreoServicio.NO_CONFIGURADO);
+        }
+        int idUsuario = usuario.getIdUsuario();
+        validarLimiteEnvios(envioDAO.contarDesde(idUsuario, LocalDateTime.now().minusHours(1)));
+
+        byte[] archivo = armar(usuario, mes, formato);
+        EnvioReporte envio = new EnvioReporte(idUsuario, mes.atDay(1), formato.getCodigo(), destino, EnvioReporte.ENVIADO);
+        try {
+            correoServicio.enviarReporte(destino, usuario.getNombreCompleto(), mes, formato, archivo);
+        } catch (ValidacionException e) {
+            envio.setEstado(EnvioReporte.ERROR);
+            envioDAO.insertar(envio);
+            throw e;
+        }
+        envioDAO.insertar(envio);
+    }
+
+    /** Revisa por POP3 si el envío rebotó; si rebotó, actualiza su estado a REBOTADO. */
+    public CorreoServicio.EstadoEntrega verificarEnvio(int idUsuario, int idEnvio) throws SQLException, ValidacionException {
+        EnvioReporte envio = envioDAO.buscarPorId(idEnvio, idUsuario);
+        if (envio == null) {
+            throw new ValidacionException("No se encontró el envío indicado.");
+        }
+        if (!EnvioReporte.ENVIADO.equals(envio.getEstado())) {
+            throw new ValidacionException("Solo se puede verificar un envío en estado ENVIADO.");
+        }
+        CorreoServicio.EstadoEntrega estado = correoServicio.verificarEntrega(envio.getCorreoDestino(), envio.getFechaEnvio());
+        if (estado == CorreoServicio.EstadoEntrega.REBOTADO) {
+            envioDAO.actualizarEstado(idEnvio, idUsuario, EnvioReporte.REBOTADO);
+        }
+        return estado;
+    }
+
+    public EnvioReporte buscarEnvio(int idUsuario, int idEnvio) throws SQLException {
+        return envioDAO.buscarPorId(idEnvio, idUsuario);
+    }
+
+    public List<EnvioReporte> historialEnvios(int idUsuario) throws SQLException {
+        return envioDAO.listarRecientes(idUsuario, 10);
+    }
+
+    /** Límite anti-abuso: como máximo LIMITE_ENVIOS_POR_HORA envíos por usuario en la última hora. */
+    static void validarLimiteEnvios(int enviosUltimaHora) throws ValidacionException {
+        if (enviosUltimaHora >= LIMITE_ENVIOS_POR_HORA) {
+            throw new ValidacionException("Alcanzaste el límite de envíos por hora. Inténtalo más tarde.");
+        }
+    }
+
+    /** Arma el reporte con JasperReports sin registrarlo en el historial de descargas. */
+    private byte[] armar(Usuario usuario, YearMonth mes, FormatoReporte formato) throws SQLException {
         int idUsuario = usuario.getIdUsuario();
         ResumenPeriodo resumen = estadisticaServicio.resumenMes(idUsuario, mes);
         ResumenPeriodo anterior = estadisticaServicio.resumenMes(idUsuario, mes.minusMonths(1));
@@ -52,14 +134,7 @@ public class ReporteServicio {
 
         Map<String, Object> parametros = parametros(usuario, mes, resumen, anterior, presupuesto, gastado,
                 metas, recomendaciones, movimientos, LocalDateTime.now());
-        byte[] archivo = ReporteJasper.generar(parametros, formato);
-
-        reporteDAO.insertarReporte(new ReporteFinanciero(idUsuario, mes.toString(), formato.getCodigo()));
-        return archivo;
-    }
-
-    public List<ReporteFinanciero> historial(int idUsuario) throws SQLException {
-        return reporteDAO.listarReportes(idUsuario, 10);
+        return ReporteJasper.generar(parametros, formato);
     }
 
     /** Arma los parámetros y las tablas de la plantilla a partir de los datos ya consultados. */

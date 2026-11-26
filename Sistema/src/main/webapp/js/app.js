@@ -137,6 +137,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         e.preventDefault();
 
+        if (form.hasAttribute('data-enviar-en-modal')) {
+            enviarFormularioEnModal(form);
+            return;
+        }
+
         var confirmacion = form.getAttribute('data-confirmar');
         if (confirmacion && !window.confirm(confirmacion)) {
             return;
@@ -193,6 +198,56 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Formularios de un modal que responden solo un mensaje (ej. enviar el reporte por correo):
+    // el resultado se muestra dentro del modal y la sección se recarga al cerrarlo.
+    function enviarFormularioEnModal(form) {
+        var boton = form.querySelector('[type="submit"]');
+        var resultado = form.querySelector('[data-resultado]');
+        var contenidoBoton = boton ? boton.innerHTML : '';
+        if (boton) {
+            boton.disabled = true;
+            boton.textContent = 'Enviando…';
+        }
+        if (resultado) {
+            resultado.innerHTML = '';
+        }
+
+        peticion(form.getAttribute('action'), {
+            method: 'POST',
+            body: new URLSearchParams(new FormData(form)),
+            headers: { 'X-CSRF-Token': csrf }
+        }).then(function (r) {
+            if (resultado) {
+                resultado.innerHTML = r.texto || '<p class="mensaje-error">No se pudo completar la acción. Intenta de nuevo.</p>';
+            }
+            var modal = form.closest('.modal');
+            if (modal) {
+                modal.setAttribute('data-recargar-al-cerrar', '');
+            }
+            if (r.ok && resultado) {
+                toast(resultado.textContent.trim());
+            }
+        }).catch(function (error) {
+            console.error(error);
+            if (resultado) {
+                resultado.innerHTML = '<p class="mensaje-error">No se pudo conectar con el servidor. Intenta de nuevo.</p>';
+            }
+        }).then(function () {
+            if (boton) {
+                boton.disabled = false;
+                boton.innerHTML = contenidoBoton;
+            }
+        });
+    }
+
+    function cerrarModal(modal) {
+        modal.classList.add('hidden');
+        if (modal.hasAttribute('data-recargar-al-cerrar')) {
+            modal.removeAttribute('data-recargar-al-cerrar');
+            cargarSeccion();
+        }
+    }
+
     // Enlaces internos de las secciones: <a data-navegar="educacion?leccion=2">
     contenido.addEventListener('click', function (e) {
         var enlace = e.target.closest('[data-navegar]');
@@ -225,6 +280,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
                 });
+                // Copia valores elegidos fuera del modal: <input data-copiar-de="mesReporte">
+                modal.querySelectorAll('[data-copiar-de]').forEach(function (campo) {
+                    var origen = document.getElementById(campo.getAttribute('data-copiar-de'));
+                    if (origen && origen.value) {
+                        campo.value = origen.value;
+                    }
+                });
+                modal.querySelectorAll('[data-resultado]').forEach(function (r) { r.innerHTML = ''; });
                 modal.classList.remove('hidden');
                 var primerCampo = modal.querySelector('input:not([type=hidden]), select');
                 if (primerCampo) {
@@ -237,14 +300,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.closest('[data-cerrar-modal]') || e.target.classList.contains('modal')) {
             var abierto = e.target.closest('.modal');
             if (abierto) {
-                abierto.classList.add('hidden');
+                cerrarModal(abierto);
             }
         }
     });
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-            document.querySelectorAll('.modal:not(.hidden)').forEach(function (m) { m.classList.add('hidden'); });
+            document.querySelectorAll('.modal:not(.hidden)').forEach(cerrarModal);
             cerrarPanelAlertas();
             cerrarMenuMovil();
         }

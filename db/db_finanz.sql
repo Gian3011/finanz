@@ -273,6 +273,25 @@ CREATE TABLE recomendacion (
         REFERENCES usuario (id_usuario) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- ---------------------------------------------------------------------
+-- ENVIO_REPORTE: resúmenes financieros enviados por correo (SMTP) y el
+-- resultado de la verificación de entrega (POP3)
+-- ---------------------------------------------------------------------
+CREATE TABLE envio_reporte (
+    id_envio        INT           NOT NULL AUTO_INCREMENT,
+    id_usuario      INT           NOT NULL,
+    periodo         DATE          NOT NULL,
+    formato         VARCHAR(10)   NOT NULL,
+    correo_destino  VARCHAR(150)  NOT NULL,
+    fecha_envio     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado          VARCHAR(20)   NOT NULL DEFAULT 'ENVIADO',
+    PRIMARY KEY (id_envio),
+    KEY idx_envio_usuario_fecha (id_usuario, fecha_envio),
+    CONSTRAINT fk_envio_usuario FOREIGN KEY (id_usuario)
+        REFERENCES usuario (id_usuario) ON DELETE CASCADE,
+    CONSTRAINT ck_envio_estado CHECK (estado IN ('ENVIADO', 'REBOTADO', 'ERROR'))
+) ENGINE=InnoDB;
+
 
 -- =====================================================================
 --  DATOS INICIALES
