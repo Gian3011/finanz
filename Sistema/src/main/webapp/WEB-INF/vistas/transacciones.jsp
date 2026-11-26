@@ -74,6 +74,12 @@
 
             <button type="submit" class="btn btn-primario w-full">Guardar movimiento</button>
         </form>
+
+        <div class="mt-5 border-t pt-5" style="border-color:var(--line)">
+            <h3 class="text-sm font-bold">¿Tienes el PDF?</h3>
+            <p class="mt-1 text-xs muted">Importa los consumos del estado de cuenta de tu tarjeta o una boleta o factura electrónica.</p>
+            <button type="button" class="btn btn-suave mt-3 w-full" data-abrir-modal="modal-importar-pdf"><i data-lucide="file-up"></i>Importar desde PDF</button>
+        </div>
     </aside>
 
     <!-- Historial -->
@@ -157,6 +163,35 @@
         <p id="sin-resultados-filtro" class="hidden py-10 text-center text-sm muted">Ningún movimiento coincide con los filtros.</p>
         <% } %>
     </article>
+</div>
+
+<!-- Modal: importar gastos desde PDF -->
+<div id="modal-importar-pdf" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="titulo-importar-pdf">
+    <div class="surface w-full max-w-md rounded-2xl p-6">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 id="titulo-importar-pdf" class="text-lg font-bold">Importar desde PDF</h3>
+            <button type="button" class="btn btn-icono" data-cerrar-modal aria-label="Cerrar">✕</button>
+        </div>
+        <form action="transacciones/importar" method="post" enctype="multipart/form-data" class="space-y-4"
+              data-texto-enviando="Leyendo el PDF…">
+            <input type="hidden" name="accion" value="analizar">
+            <div>
+                <label class="etiqueta" for="archivoPdf">Archivo PDF</label>
+                <input type="file" id="archivoPdf" name="archivo" accept="application/pdf,.pdf" required class="campo" data-tamano-maximo="5242880">
+                <p class="mt-1 text-xs muted">Estado de cuenta de tarjeta de crédito, boleta o factura electrónica. Máximo 5 MB.</p>
+            </div>
+            <div>
+                <label class="etiqueta" for="clavePdf">Clave del PDF <span class="muted">(solo si está protegido)</span></label>
+                <input type="password" id="clavePdf" name="clavePdf" maxlength="64" autocomplete="off" class="campo">
+                <p class="mt-1 text-xs muted">Muchos bancos protegen el estado de cuenta (por ejemplo, con tu DNI). La clave solo se usa para abrir el archivo; no se guarda.</p>
+            </div>
+            <p class="text-xs muted">Verás los gastos encontrados con su categoría sugerida antes de registrarlos. El PDF no se guarda en el sistema.</p>
+            <div class="flex gap-3">
+                <button type="button" class="btn btn-suave flex-1" data-cerrar-modal>Cancelar</button>
+                <button type="submit" class="btn btn-primario flex-1"><i data-lucide="scan-text"></i>Leer PDF</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Modal: nueva categoría -->

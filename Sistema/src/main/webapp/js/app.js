@@ -147,7 +147,19 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        var datos = new URLSearchParams(new FormData(form));
+        // Con archivos (importar PDF) se envía multipart; si no, como formulario normal
+        var multipart = (form.getAttribute('enctype') || '').toLowerCase() === 'multipart/form-data';
+        if (multipart) {
+            var grande = Array.prototype.some.call(form.querySelectorAll('input[type=file][data-tamano-maximo]'), function (input) {
+                var maximo = parseInt(input.getAttribute('data-tamano-maximo'), 10);
+                return Array.prototype.some.call(input.files || [], function (f) { return f.size > maximo; });
+            });
+            if (grande) {
+                toast('El archivo supera el tamaño máximo de 5 MB.');
+                return;
+            }
+        }
+        var datos = multipart ? new FormData(form) : new URLSearchParams(new FormData(form));
         var accion = form.getAttribute('action');
 
         if ((form.getAttribute('method') || 'get').toLowerCase() === 'get') {
@@ -163,6 +175,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var boton = form.querySelector('[type="submit"]');
         if (boton) {
             boton.disabled = true;
+            if (form.hasAttribute('data-texto-enviando')) {
+                boton.textContent = form.getAttribute('data-texto-enviando');
+            }
         }
         // Se conservan los parámetros de la ruta actual (ej. el mes o la lección abierta)
         var query = rutaActual().split('?')[1];
@@ -322,6 +337,38 @@ document.addEventListener('DOMContentLoaded', function () {
         aplicarFiltros();
         dibujarGraficos();
         mostrarModoSimulador();
+        resumirImportacion();
+    }
+
+    // ----- Importar PDF: marcar todos y total de lo que se va a registrar -----
+    function resumirImportacion() {
+        var form = document.getElementById('form-importacion');
+        var resumen = document.getElementById('resumen-importacion');
+        if (!form || !resumen) {
+            return;
+        }
+        var marcadas = 0;
+        var total = 0;
+        var casillas = form.querySelectorAll('input[name="fila"]');
+        casillas.forEach(function (c) {
+            var fila = c.closest('.fila-importacion');
+            fila.style.opacity = c.checked ? '1' : '0.55';
+            if (c.checked) {
+                marcadas++;
+                total += parseFloat(fila.querySelector('[data-monto-importado]').value) || 0;
+            }
+        });
+        var todos = form.querySelector('[data-seleccionar-todos]');
+        if (todos) {
+            todos.checked = marcadas === casillas.length;
+            todos.indeterminate = marcadas > 0 && marcadas < casillas.length;
+        }
+        resumen.textContent = marcadas + (marcadas === 1 ? ' gasto seleccionado' : ' gastos seleccionados') + ' · S/ '
+            + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var boton = form.querySelector('[type="submit"]');
+        if (boton) {
+            boton.disabled = marcadas === 0;
+        }
     }
 
     // ----- Transacciones: categorías según tipo y filtros -----
@@ -411,11 +458,20 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.hasAttribute('data-enviar-al-cambiar')) {
             e.target.form.requestSubmit();
         }
+        if (e.target.hasAttribute('data-seleccionar-todos')) {
+            e.target.form.querySelectorAll('input[name="fila"]').forEach(function (c) { c.checked = e.target.checked; });
+        }
+        if (e.target.name === 'fila' || e.target.hasAttribute('data-seleccionar-todos')) {
+            resumirImportacion();
+        }
     });
 
     contenido.addEventListener('input', function (e) {
         if (e.target.classList.contains('filtro')) {
             aplicarFiltros();
+        }
+        if (e.target.hasAttribute('data-monto-importado')) {
+            resumirImportacion();
         }
     });
 

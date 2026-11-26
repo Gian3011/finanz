@@ -65,6 +65,7 @@ Redirige al túnel vigente (cada persona mantiene su propia sesión) o avisa que
 | RF19 | Cuestionarios con resultados (nota 0–20) | Educación |
 | RF20 | Simular escenarios de ahorro | Simulador |
 | RF21 | Enviar el reporte por correo (SMTP) y verificar entrega (POP3) | Reportes → Enviar por correo |
+| RF22 | Importar gastos desde PDF (estado de cuenta de tarjeta, boleta o factura electrónica) y categorizarlos | Transacciones → Importar desde PDF |
 
 ### No funcionales
 
@@ -100,13 +101,14 @@ Sistema/src/main/java/com/mycompany/finanz/
 ├── dao/           Acceso a datos
 ├── modelo/        Entidades (Movimiento → Ingreso / Gasto, Presupuesto, MetaAhorro, ...)
 ├── filtro/        Seguridad y ciclo de vida de la aplicación
-└── util/          Hash de contraseñas, formato, escape HTML, JSON y ReporteJasper (PDF/Excel/Word)
+└── util/          Hash de contraseñas, formato, escape HTML, JSON, ReporteJasper (PDF/Excel/Word) y LectorPdf (PDFBox)
 Sistema/src/main/webapp/
 ├── Login.jsp, dashboard.jsp
 ├── WEB-INF/vistas/   Fragmentos JSP de cada sección (no accesibles directamente)
 ├── css/, js/, image/
 db/db_finanz.sql      Script de la base de datos con datos de demostración
 db/migracion_correo.sql  Crea la tabla envio_reporte en bases ya existentes (RF21)
+ejemplos-importacion/    PDF de prueba con datos ficticios para la importación (RF22)
 ```
 
 ---
@@ -150,6 +152,26 @@ Si falta el usuario o la clave, el botón responde *“El envío por correo no e
 `FINANZ_MAIL_USUARIO` (`finanzutp@gmail.com`) y `FINANZ_MAIL_CLAVE` (la contraseña de aplicación). Llegan al
 contenedor como variables de entorno (ver `.devcontainer/docker-compose.yml`) y tienen prioridad sobre
 `mail.properties`. Al cambiar los secretos, reinicia el Codespace. `iniciar.sh` aplica `db/migracion_correo.sql` al arrancar.
+
+---
+
+## 📄 Importar gastos desde PDF (RF22)
+
+En **Transacciones → Importar desde PDF** el usuario sube el PDF que descargó de su banco o de su correo:
+
+- **Estado de cuenta de tarjeta de crédito:** cada línea que empieza con una fecha (`15/10`, `15OCT`, `15/10/2026`)
+  y termina con un importe es un consumo. Los pagos a la tarjeta, abonos y devoluciones se omiten.
+  Si la fecha no trae año, se toma el de la fecha de corte.
+- **Boleta o factura electrónica:** se registra un gasto con el **importe total**, la fecha de emisión y el emisor.
+
+Cada gasto recibe una **categoría sugerida** según el comercio (Wong → Alimentación, Uber → Transporte,
+Netflix → Suscripciones, Inkafarma → Salud, ...). Si el usuario ya registró antes ese comercio con otra
+categoría, se usa la suya. Antes de guardar se muestra una **vista previa editable**. Quedan desmarcados, para
+revisarlos, los posibles duplicados, los importes en dólares y las fechas fuera del rango permitido.
+
+El PDF se lee en memoria con **Apache PDFBox** y **no se guarda**. Si está protegido, el usuario escribe la clave,
+que solo se usa para abrirlo. Máximo 5 MB. Los PDF escaneados (imagen sin texto) no se pueden leer.
+En `ejemplos-importacion/` hay PDF de prueba; el protegido usa la clave `12345678`.
 
 ---
 
