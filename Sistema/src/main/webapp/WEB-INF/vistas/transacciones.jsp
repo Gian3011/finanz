@@ -20,6 +20,7 @@
     List<Categoria> categoriasGasto = (List<Categoria>) request.getAttribute("categoriasGasto");
     List<Categoria> categoriasIngreso = (List<Categoria>) request.getAttribute("categoriasIngreso");
     String hoy = LocalDate.now().toString();
+    LocalDate fechaMinima = com.mycompany.finanz.servicio.MovimientoServicio.fechaMinimaPermitida(LocalDate.now());
 %>
 <%@include file="_mensajes.jspf"%>
 
@@ -67,7 +68,8 @@
 
             <div>
                 <label class="etiqueta" for="fecha">Fecha</label>
-                <input type="date" id="fecha" name="fecha" required max="<%= hoy %>" value="<%= hoy %>" class="campo">
+                <input type="date" id="fecha" name="fecha" required min="<%= fechaMinima %>" max="<%= hoy %>" value="<%= hoy %>" class="campo">
+                <p class="mt-1 text-xs muted">Desde el 01/01/<%= fechaMinima.getYear() %> hasta hoy.</p>
             </div>
 
             <button type="submit" class="btn btn-primario w-full">Guardar movimiento</button>

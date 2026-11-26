@@ -113,4 +113,27 @@ class ReglasNegocioTest {
         p.getOpciones().add(mala);
         return p;
     }
+
+    @Test
+    void soloSeRegistranMovimientosDelAnioActualYDelAnterior() throws ValidacionException {
+        LocalDate hoy = LocalDate.of(2026, 11, 26);
+        assertEquals(LocalDate.of(2025, 1, 1), MovimientoServicio.fechaMinimaPermitida(hoy));
+
+        MovimientoServicio.validarFecha(hoy, hoy);
+        MovimientoServicio.validarFecha(LocalDate.of(2026, 1, 1), hoy);
+        MovimientoServicio.validarFecha(LocalDate.of(2025, 1, 1), hoy);
+        MovimientoServicio.validarFecha(LocalDate.of(2025, 12, 31), hoy);
+
+        ValidacionException e = assertThrows(ValidacionException.class,
+                () -> MovimientoServicio.validarFecha(LocalDate.of(2024, 12, 31), hoy));
+        assertEquals("Solo puedes registrar movimientos de 2025 y 2026. Los de 2024 o años anteriores no se aceptan.",
+                e.getMessage());
+        assertThrows(ValidacionException.class, () -> MovimientoServicio.validarFecha(LocalDate.of(2020, 6, 15), hoy));
+        assertThrows(ValidacionException.class, () -> MovimientoServicio.validarFecha(hoy.plusDays(1), hoy));
+
+        // El 1 de enero de 2027 ya se acepta 2026 y deja de aceptarse 2025
+        LocalDate anioNuevo = LocalDate.of(2027, 1, 1);
+        MovimientoServicio.validarFecha(LocalDate.of(2026, 1, 1), anioNuevo);
+        assertThrows(ValidacionException.class, () -> MovimientoServicio.validarFecha(LocalDate.of(2025, 12, 31), anioNuevo));
+    }
 }

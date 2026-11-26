@@ -35,6 +35,26 @@ public class MovimientoServicio {
      * Valida y guarda un movimiento. Devuelve los avisos para el usuario
      * (gasto hormiga detectado, alertas de presupuesto nuevas).
      */
+    /**
+     * Primera fecha permitida para registrar un ingreso o gasto: el 1 de enero del año anterior
+     * (en 2026 se aceptan movimientos de 2025 y 2026; de 2024 hacia atrás, no).
+     */
+    public static LocalDate fechaMinimaPermitida(LocalDate hoy) {
+        return LocalDate.of(hoy.getYear() - 1, 1, 1);
+    }
+
+    /** La fecha del movimiento debe estar entre el 1 de enero del año anterior y hoy. */
+    static void validarFecha(LocalDate fecha, LocalDate hoy) throws ValidacionException {
+        if (fecha.isAfter(hoy)) {
+            throw new ValidacionException("La fecha no puede ser posterior a hoy.");
+        }
+        LocalDate minima = fechaMinimaPermitida(hoy);
+        if (fecha.isBefore(minima)) {
+            throw new ValidacionException("Solo puedes registrar movimientos de " + minima.getYear() + " y " + hoy.getYear()
+                    + ". Los de " + (minima.getYear() - 1) + " o años anteriores no se aceptan.");
+        }
+    }
+
     public List<String> registrar(int idUsuario, String tipo, int idCategoria, BigDecimal monto,
                                   LocalDate fecha, String descripcion, String fuente)
             throws ValidacionException, SQLException {
@@ -45,12 +65,7 @@ public class MovimientoServicio {
         if (categoria == null || !tipo.equals(categoria.getTipo())) {
             throw new ValidacionException("Selecciona una categoría válida para el tipo de movimiento.");
         }
-        if (fecha.isAfter(LocalDate.now())) {
-            throw new ValidacionException("La fecha no puede ser posterior a hoy.");
-        }
-        if (fecha.isBefore(LocalDate.now().minusYears(5))) {
-            throw new ValidacionException("La fecha es demasiado antigua.");
-        }
+        validarFecha(fecha, LocalDate.now());
 
         List<String> avisos = new ArrayList<>();
         if ("INGRESO".equals(tipo)) {
