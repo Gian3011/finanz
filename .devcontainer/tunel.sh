@@ -53,7 +53,8 @@ setsid nohup cloudflared tunnel --no-autoupdate --url http://localhost:8080 > /t
 echo "⏳ Abriendo el túnel..."
 URL=""
 for i in $(seq 1 40); do
-  URL=$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' /tmp/tunel.log | head -1 || true)
+  # -a: el registro de cloudflared trae caracteres especiales y grep lo tomaría como binario
+  URL=$(grep -ao 'https://[a-z0-9-]*\.trycloudflare\.com' /tmp/tunel.log | head -1 || true)
   [ -n "$URL" ] && break
   sleep 1
 done
